@@ -1045,7 +1045,7 @@ export default function App() {
   const effectiveApiKey = apiKey || DEFAULT_TMDB_API_KEY;
   const hasCustomTitlebar = platform === "win32" || platform === "linux";
   const isPlaying =
-    (page === "movie" && selected) || (page === "tv" && selected);
+    (page === "movie" && selected) || (page === "tv" && selected) || Boolean(directPlayerItem);
 
   const filteredTrending = useMemo(() => {
     if (!isKids) return trending;

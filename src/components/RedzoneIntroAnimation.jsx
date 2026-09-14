@@ -3,49 +3,50 @@ import { playTudumSound } from "../utils/tudumSound";
 import NetflixLogo from "./NetflixLogo";
 
 export default function RedzoneIntroAnimation({ onComplete }) {
+  const [hasStartedAudio, setHasStartedAudio] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const timerRef = useRef(null);
 
-  useEffect(() => {
-    // Attempt automatic playback immediately
-    playTudumSound();
-
-    const tryPlay = () => {
+  const startSoundAndTimer = () => {
+    if (!hasStartedAudio) {
       playTudumSound();
-    };
+      setHasStartedAudio(true);
+    }
+  };
 
-    // Any pointer, touch, mouse movement or key triggers playback if autoplay was restricted
-    window.addEventListener("pointerdown", tryPlay, { once: true });
-    window.addEventListener("touchstart", tryPlay, { once: true });
-    window.addEventListener("mousedown", tryPlay, { once: true });
-    window.addEventListener("mousemove", tryPlay, { once: true });
-    window.addEventListener("keydown", tryPlay, { once: true });
+  useEffect(() => {
+    // Attempt automatic playback
+    startSoundAndTimer();
 
-    // Start fade out at 2.6s
+    // Start fade out at 2.7s
     const fadeTimer = setTimeout(() => {
       setIsFadingOut(true);
-    }, 2600);
+    }, 2700);
 
-    // Fully complete at 3.2s
+    // Fully complete at 3.3s
     timerRef.current = setTimeout(() => {
       onComplete?.();
-    }, 3200);
+    }, 3300);
+
+    const handleInteraction = () => {
+      startSoundAndTimer();
+    };
+
+    window.addEventListener("pointerdown", handleInteraction, { once: true });
+    window.addEventListener("keydown", handleInteraction, { once: true });
 
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(timerRef.current);
-      window.removeEventListener("pointerdown", tryPlay);
-      window.removeEventListener("touchstart", tryPlay);
-      window.removeEventListener("mousedown", tryPlay);
-      window.removeEventListener("mousemove", tryPlay);
-      window.removeEventListener("keydown", tryPlay);
+      window.removeEventListener("pointerdown", handleInteraction);
+      window.removeEventListener("keydown", handleInteraction);
     };
   }, [onComplete]);
 
   return (
     <div
       className={`redzone-intro-container ${isFadingOut ? "redzone-intro-fade-out" : ""}`}
-      onClick={() => playTudumSound()}
+      onClick={startSoundAndTimer}
     >
       {/* Cinematic Ribbon Lines Effect */}
       <div className="redzone-intro-ribbons" aria-hidden="true">

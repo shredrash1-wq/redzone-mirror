@@ -4,41 +4,56 @@
 let sharedAudioCtx = null;
 let soundPlayed = false;
 
-export async function playTudumSound() {
+function getAudioContext() {
+  if (!sharedAudioCtx || sharedAudioCtx.state === "closed") {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      sharedAudioCtx = new AudioCtx();
+    }
+  }
+  return sharedAudioCtx;
+}
+
+export function playTudumSound() {
   if (soundPlayed) return;
 
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
-    if (!sharedAudioCtx || sharedAudioCtx.state === "closed") {
-      sharedAudioCtx = new AudioCtx();
+    if (ctx.state === "suspended") {
+      ctx.resume().then(() => {
+        if (!soundPlayed && ctx.state === "running") {
+          synthesizeTudum(ctx);
+        }
+      }).catch(() => {});
+    } else if (ctx.state === "running") {
+      synthesizeTudum(ctx);
     }
+  } catch (err) {
+    console.warn("Audio playback init:", err);
+  }
+}
 
-    if (sharedAudioCtx.state === "suspended") {
-      await sharedAudioCtx.resume().catch(() => {});
-    }
+function synthesizeTudum(ctx) {
+  if (soundPlayed) return;
+  soundPlayed = true;
 
-    if (sharedAudioCtx.state !== "running") {
-      return;
-    }
-
-    soundPlayed = true;
-    const ctx = sharedAudioCtx;
+  try {
     const now = ctx.currentTime;
     const masterGain = ctx.createGain();
     masterGain.gain.setValueAtTime(1.0, now);
     masterGain.connect(ctx.destination);
 
-    // ── 1. The Deep Sub-Bass Thud ("Ta") at now + 0.05s ──────────────
+    // ── 1. The Deep Sub-Bass Thud ("Ta") at now + 0.02s ──────────────
     const subOsc1 = ctx.createOscillator();
     const subGain1 = ctx.createGain();
     subOsc1.type = "sine";
     subOsc1.frequency.setValueAtTime(100, now + 0.02);
-    subOsc1.frequency.exponentialRampToValueAtTime(32, now + 0.35);
+    subOsc1.frequency.exponentialRampToValueAtTime(30, now + 0.35);
 
     subGain1.gain.setValueAtTime(0.001, now);
-    subGain1.gain.setValueAtTime(0.9, now + 0.02);
+    subGain1.gain.setValueAtTime(0.95, now + 0.02);
     subGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
 
     subOsc1.connect(subGain1);
@@ -46,12 +61,12 @@ export async function playTudumSound() {
     subOsc1.start(now + 0.02);
     subOsc1.stop(now + 0.6);
 
-    // ── 2. The Primary Heavy Impact ("DUM!") at now + 0.28s ──────────
+    // ── 2. The Primary Heavy Impact ("DUM!") at now + 0.26s ──────────
     const subOsc2 = ctx.createOscillator();
     const subGain2 = ctx.createGain();
     subOsc2.type = "sine";
     subOsc2.frequency.setValueAtTime(120, now + 0.26);
-    subOsc2.frequency.exponentialRampToValueAtTime(38, now + 0.75);
+    subOsc2.frequency.exponentialRampToValueAtTime(36, now + 0.75);
 
     subGain2.gain.setValueAtTime(0.001, now);
     subGain2.gain.setValueAtTime(1.0, now + 0.26);
@@ -131,6 +146,6 @@ export async function playTudumSound() {
     chimeOsc.start(now + 0.35);
     chimeOsc.stop(now + 2.6);
   } catch (err) {
-    console.warn("Could not play Tudum sound:", err);
+    console.warn("Tudum synthesis error:", err);
   }
 }
