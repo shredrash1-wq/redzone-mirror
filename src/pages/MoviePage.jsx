@@ -23,6 +23,7 @@ import {
   NEEDS_INTERCEPT,
   getNextNonAsyncSource,
 } from "../utils/api";
+import { resolveAnimeEpisode } from "../utils/animeResolver";
 import {
   PlayIcon,
   BookmarkIcon,
@@ -316,10 +317,21 @@ export default function MoviePage({
     };
   }, [item.id, isAnime]);
 
-  // Resolve AllManga movie URL via main-process IPC
+  // Track the last resolved movie key to prevent duplicate calls while allowing sub/dub toggle
+  const lastResolvedMovieKeyRef = useRef("");
+
+  // Resolve AllManga / Anime movie URL via universal resolver (Electron IPC + Web/Android GQL)
   useEffect(() => {
     if (!playing) return;
     const epKey = `movie_${item.id}_${dubMode}`;
+
+    // If movie key or dub mode changed, clear previous resolved URL to allow fresh fetch
+    if (lastResolvedMovieKeyRef.current !== epKey) {
+      resolvedPlayerUrlRef.current = null;
+      setResolvedPlayerUrl(null);
+      setM3u8Url(null);
+      setResolveError(null);
+    }
 
     // Auto-failover: if a previous attempt taught us AllManga doesn't have
     // this title, skip straight to the cached fallback source.
@@ -346,19 +358,20 @@ export default function MoviePage({
     setResolveError(null);
     const startTime = storage.get("dlTime_" + progressKey) || 0;
     let mounted = true;
-    window.electron
-      .resolveAllManga({
-        title,
-        seasonNumber: 1,
-        episodeNumber: 1,
-        isMovie: true,
-        translationType: dubMode,
-      })
+
+    resolveAnimeEpisode({
+      title,
+      seasonNumber: 1,
+      episodeNumber: 1,
+      isMovie: true,
+      translationType: dubMode,
+    })
       .then((res) => {
         if (!mounted) return;
         if (res?.ok && res.url) {
           clearFailoverSource(epKey);
-          if (res.isDirectMp4 !== undefined) {
+          lastResolvedMovieKeyRef.current = epKey;
+          if (window.electron?.setPlayerVideo && res.isDirectMp4 !== undefined) {
             window.electron
               .setPlayerVideo({
                 url: res.url,
@@ -372,15 +385,19 @@ export default function MoviePage({
                 setM3u8Url(res.url);
               })
               .catch(() => {
-                if (mounted) setResolveError("Failed to start local player");
+                if (mounted) {
+                  resolvedPlayerUrlRef.current = res.url;
+                  setResolvedPlayerUrl(res.url);
+                  setM3u8Url(res.url);
+                }
               });
           } else {
             resolvedPlayerUrlRef.current = res.url;
             setResolvedPlayerUrl(res.url);
+            setM3u8Url(res.url);
           }
         } else {
           // AllManga doesn't have this title → switch to the next source
-          // automatically and remember the choice for next time.
           const next = getNextNonAsyncSource(playerSource);
           if (next) {
             setFailoverSource(epKey, next);
@@ -391,12 +408,12 @@ export default function MoviePage({
             setResolveError(null);
             setPlayerSource(next);
           } else {
-            setResolveError(res?.error || "Movie not found on AllManga");
+            setResolveError(res?.error || `Movie (${dubMode.toUpperCase()}) not found`);
           }
         }
       })
       .catch((e) => {
-        if (mounted) setResolveError(e.message || "Error");
+        if (mounted) setResolveError(e.message || "Error resolving stream");
       })
       .finally(() => {
         if (mounted) {
@@ -407,7 +424,7 @@ export default function MoviePage({
     return () => {
       mounted = false;
     };
-  }, [playing, playerSource, dubMode]);
+  }, [playing, playerSource, dubMode, item.id, title]);
 
   useEffect(() => {
     if (!window.electron) return;
@@ -1032,6 +1049,7 @@ export default function MoviePage({
                           {},
                           playerAccentColor,
                           playerSubLang,
+                          dubMode,
                         )
                 }
                 partition="persist:player"
@@ -1064,6 +1082,7 @@ export default function MoviePage({
                         {},
                         playerAccentColor,
                         playerSubLang,
+                        dubMode,
                       )
                 }
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
@@ -1096,25 +1115,36 @@ export default function MoviePage({
                 {PLAYER_SOURCES.find((s) => s.id === playerSource)?.label ??
                   "Source"}
               </button>
-              {/* Sub/Dub toggle, only for async (AllManga) sources */}
-              {sourceIsAsync(playerSource) && (
+              {/* Sub/Dub toggle for Anime & Async sources */}
+              {(isAnime || sourceIsAsync(playerSource) || playerSource === "allmanga") && (
                 <button
-                  className="player-overlay-btn"
+                  className={`player-overlay-btn ${dubMode === "dub" ? "player-overlay-btn-active" : ""}`}
+                  style={
+                    dubMode === "dub"
+                      ? {
+                          background: "rgba(229, 9, 20, 0.35)",
+                          borderColor: "var(--red)",
+                          color: "#fff",
+                          fontWeight: "700",
+                        }
+                      : { fontWeight: "600" }
+                  }
                   onClick={() => {
                     const next = dubMode === "sub" ? "dub" : "sub";
                     setDubMode(next);
                     storage.set(STORAGE_KEYS.ALLMANGA_DUB_MODE, next);
-                    setM3u8Url(null);
-                    setInterceptedSubs([]);
+                    lastResolvedMovieKeyRef.current = "";
                     resolvedPlayerUrlRef.current = null;
                     setResolvedPlayerUrl(null);
+                    setM3u8Url(null);
+                    setInterceptedSubs([]);
                     resolvingUrlRef.current = false;
                     setResolvingUrl(false);
                     setResolveError(null);
                   }}
-                  title="Toggle Sub/Dub"
+                  title="Toggle Japanese Sub / English Dub"
                 >
-                  {dubMode === "sub" ? "SUB" : "DUB"}
+                  {dubMode === "sub" ? "🎙️ SUB" : "🔊 DUB"}
                 </button>
               )}
               {/* Blocked ads & trackers button */}

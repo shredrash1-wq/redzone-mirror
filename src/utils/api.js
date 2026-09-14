@@ -189,6 +189,7 @@ export const getSourceUrl = (
   // Optional: accent hex (with or without #) and subtitle ISO lang code
   accentColor = null,
   subtitleLang = null,
+  dubMode = null,
 ) => {
   const src =
     PLAYER_SOURCES.find((s) => s.id === sourceId) ?? PLAYER_SOURCES[0];
@@ -207,6 +208,13 @@ export const getSourceUrl = (
 
   if (subtitleLang && src.langParam) {
     url.searchParams.set(src.langParam, subtitleLang);
+  }
+
+  // Inject Dub parameters if Dub mode is requested
+  if (dubMode === "dub") {
+    url.searchParams.set("dub", "1");
+    url.searchParams.set("audio", "dub");
+    url.searchParams.set("translationType", "dub");
   }
 
   Object.entries(extraParams).forEach(([key, value]) => {

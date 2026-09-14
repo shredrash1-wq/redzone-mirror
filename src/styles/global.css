@@ -1920,6 +1920,13 @@ kbd {
     border-color: var(--red);
 }
 
+.player-overlay-btn-active {
+    background: rgba(229, 9, 20, 0.4) !important;
+    border-color: #e50914 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+}
+
 .player-overlay-btn svg {
     width: 16px;
     height: 16px;
