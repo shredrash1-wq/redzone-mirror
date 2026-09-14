@@ -2,6 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./styles/global.css";
+import { initAdBlocker } from "./utils/adBlocker";
+
+// Activate silent built-in ad blocker & popup shield
+initAdBlocker();
 
 // Web compatibility fallback for electron IPC when running in the browser
 if (typeof window !== "undefined" && !window.electron) {

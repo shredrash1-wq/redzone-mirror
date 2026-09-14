@@ -6,16 +6,16 @@ const STREAMING_SERVERS = [
   {
     id: "videasy",
     name: "Server 1",
-    label: "Server 1 (Videasy - 1080p HD)",
+    label: "Server 1",
     quality: "1080p HD",
-    tag: "Fast / Ultra HD",
+    tag: "Ultra HD • Fast",
     getMovieUrl: (id) => `https://player.videasy.to/movie/${id}?color=e50914`,
     getTvUrl: (id, s, e) => `https://player.videasy.to/tv/${id}/${s}/${e}?color=e50914`,
   },
   {
     id: "vidlink",
     name: "Server 2",
-    label: "Server 2 (VidLink - 4K / Multi-Audio)",
+    label: "Server 2",
     quality: "4K / Multi-Sub",
     tag: "Multi-Audio",
     getMovieUrl: (id) => `https://vidlink.pro/movie/${id}?primaryColor=e50914&secondaryColor=141414`,
@@ -24,45 +24,45 @@ const STREAMING_SERVERS = [
   {
     id: "autoembed",
     name: "Server 3",
-    label: "Server 3 (AutoEmbed - Multi CDN)",
+    label: "Server 3",
     quality: "Auto / 1080p",
-    tag: "Fast CDN",
+    tag: "High Speed CDN",
     getMovieUrl: (id) => `https://player.autoembed.cc/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`,
   },
   {
     id: "vidsrc_icu",
     name: "Server 4",
-    label: "Server 4 (VidSrc ICU - High Speed)",
+    label: "Server 4",
     quality: "1080p",
-    tag: "High Speed",
+    tag: "Stable Stream",
     getMovieUrl: (id) => `https://vidsrc.icu/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidsrc.icu/embed/tv/${id}/${s}/${e}`,
   },
   {
     id: "smashy",
     name: "Server 5",
-    label: "Server 5 (SmashyStream - Multi Sources)",
-    quality: "Multi-Source",
-    tag: "Reliable",
+    label: "Server 5",
+    quality: "HD Stream",
+    tag: "Multi-Mirror",
     getMovieUrl: (id) => `https://embed.smashystream.com/playere.php?tmdb=${id}`,
     getTvUrl: (id, s, e) => `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`,
   },
   {
     id: "twoembed",
     name: "Server 6",
-    label: "Server 6 (2Embed - Mirror)",
+    label: "Server 6",
     quality: "HD 720p/1080p",
-    tag: "Mirror",
+    tag: "Backup Mirror",
     getMovieUrl: (id) => `https://www.2embed.cc/embed/${id}`,
     getTvUrl: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
   },
   {
     id: "vidking",
     name: "Server 7",
-    label: "Server 7 (Vidking - Direct)",
+    label: "Server 7",
     quality: "Direct HD",
-    tag: "Direct",
+    tag: "Direct Source",
     getMovieUrl: (id) => `https://www.vidking.net/embed/movie/${id}?autoPlay=true&color=e50914`,
     getTvUrl: (id, s, e) => `https://www.vidking.net/embed/tv/${id}/${s}/${e}?autoPlay=true&color=e50914`,
   },
@@ -410,8 +410,8 @@ export default function RedzoneVideoPlayer({
                       }}
                     >
                       <div className="redzone-server-item-left">
-                        <span className="redzone-server-item-label">{srv.label}</span>
-                        <span className="redzone-server-item-tag">{srv.tag}</span>
+                        <span className="redzone-server-item-label">{srv.name}</span>
+                        <span className="redzone-server-item-tag">{srv.quality} • {srv.tag}</span>
                       </div>
                       {srv.id === serverId && <span className="redzone-server-active-check">✓</span>}
                     </button>
