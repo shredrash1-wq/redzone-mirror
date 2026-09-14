@@ -66,6 +66,7 @@ export default function RedzoneVideoPlayer({
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hideSandboxBar, setHideSandboxBar] = useState(false);
 
   const containerRef = useRef(null);
   const hideTimerRef = useRef(null);
@@ -335,6 +336,21 @@ export default function RedzoneVideoPlayer({
             )}
           </div>
 
+          {/* Direct Tab / Clean Popout (bypasses any parent iframe sandbox) */}
+          <button
+            type="button"
+            className="redzone-player-control-btn redzone-player-direct-tab-btn"
+            onClick={() => window.open(streamUrl, "_blank", "noopener,noreferrer")}
+            title="Open stream in a new browser tab (Bypasses sandboxed iframe restrictions)"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            <span className="redzone-control-label">Open Tab</span>
+          </button>
+
           {/* TV Episodes Drawer Button */}
           {isTV && (
             <button
@@ -387,6 +403,47 @@ export default function RedzoneVideoPlayer({
           </button>
         </div>
       </header>
+
+      {/* Subtle Sandbox / Provider Helper Banner */}
+      {!hideSandboxBar && showControls && (
+        <div
+          className="redzone-player-sandbox-notice"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span>
+            If the current server displays a frame or sandbox restriction in this browser frame:
+          </span>
+          <div className="redzone-player-sandbox-actions">
+            <button
+              type="button"
+              className="redzone-sandbox-action-btn"
+              onClick={() => window.open(streamUrl, "_blank", "noopener,noreferrer")}
+            >
+              Open Direct Stream ↗
+            </button>
+            <button
+              type="button"
+              className="redzone-sandbox-action-btn redzone-sandbox-action-btn--alt"
+              onClick={() => {
+                const nextServer = STREAMING_SERVERS[(STREAMING_SERVERS.findIndex(s => s.id === serverId) + 1) % STREAMING_SERVERS.length];
+                setServerId(nextServer.id);
+                storage.set("redzone_preferred_server", nextServer.id);
+                setIframeLoading(true);
+              }}
+            >
+              Switch Server ↻
+            </button>
+            <button
+              type="button"
+              className="redzone-sandbox-close-btn"
+              onClick={() => setHideSandboxBar(true)}
+              title="Dismiss notice"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Floating Next Episode Action */}
       {isTV && hasNextEpisode && (
