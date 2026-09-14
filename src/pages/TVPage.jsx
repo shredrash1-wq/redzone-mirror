@@ -2076,7 +2076,6 @@ export default function TVPage({
                     }
                     partition="persist:player"
                     allowpopups="false"
-                    sandbox="allow-scripts allow-same-origin allow-forms"
                     style={{
                       position: "absolute",
                       inset: 0,
