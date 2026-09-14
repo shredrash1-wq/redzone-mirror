@@ -97,18 +97,35 @@ export default function RedzoneVideoPlayer({
   const [reloadKey, setReloadKey] = useState(0);
 
   const containerRef = useRef(null);
+  const iframeRef = useRef(null);
   const hideTimerRef = useRef(null);
   const serverMenuRef = useRef(null);
 
-  // Standard Default Fullscreen
+  // Native Default Device Fullscreen (iOS AVPlayer / Android Samsung Video Player)
   const toggleFullscreen = useCallback(() => {
     try {
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        const el = containerRef.current || document.documentElement;
-        if (el.requestFullscreen) {
-          el.requestFullscreen().catch(() => {});
-        } else if (el.webkitRequestFullscreen) {
-          el.webkitRequestFullscreen();
+      const isDocFs = Boolean(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+
+      if (!isDocFs) {
+        // Trigger native device player fullscreen on the media iframe / element
+        const targetEl = iframeRef.current || containerRef.current || document.documentElement;
+        if (targetEl.requestFullscreen) {
+          targetEl.requestFullscreen().catch(() => {
+            if (containerRef.current?.requestFullscreen) {
+              containerRef.current.requestFullscreen().catch(() => {});
+            }
+          });
+        } else if (targetEl.webkitRequestFullscreen) {
+          targetEl.webkitRequestFullscreen();
+        } else if (targetEl.webkitEnterFullscreen) {
+          targetEl.webkitEnterFullscreen();
+        } else if (containerRef.current?.webkitRequestFullscreen) {
+          containerRef.current.webkitRequestFullscreen();
         }
       } else {
         if (document.exitFullscreen) {
@@ -367,10 +384,6 @@ export default function RedzoneVideoPlayer({
         if (!showControls) setShowControls(true);
       }}
     >
-      {/* Invisible Hover & Touch Activation Zones */}
-      <div className="redzone-player-hover-strip redzone-player-hover-strip--top" onMouseEnter={() => setShowControls(true)} onClick={() => setShowControls(true)} />
-      <div className="redzone-player-hover-strip redzone-player-hover-strip--bottom" onMouseEnter={() => setShowControls(true)} onClick={() => setShowControls(true)} />
-
       {/* Central Video Stream (iframe) with True Full-Bleed Fluid Fit */}
       <div className="redzone-player-stage redzone-player-stage--fullscreen">
         {iframeLoading && (
@@ -382,6 +395,7 @@ export default function RedzoneVideoPlayer({
         )}
 
         <iframe
+          ref={iframeRef}
           key={`${streamUrl}-${reloadKey}`}
           src={streamUrl}
           title={title}

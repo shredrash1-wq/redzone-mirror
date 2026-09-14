@@ -1599,24 +1599,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Invisible Hover Zones */
-.redzone-player-hover-strip {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 80px;
-  z-index: 100005;
-  pointer-events: auto;
-}
-
-.redzone-player-hover-strip--top {
-  top: 0;
-}
-
-.redzone-player-hover-strip--bottom {
-  bottom: 0;
-}
-
 /* Floating Persistent Controls Trigger - Liquid Glass */
 .redzone-player-floating-trigger {
   position: absolute;
