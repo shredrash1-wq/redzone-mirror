@@ -88,6 +88,8 @@ export default function RedzoneVideoPlayer({
   const [showControls, setShowControls] = useState(true);
   const [showServerMenu, setShowServerMenu] = useState(false);
   const [showEpisodesDrawer, setShowEpisodesDrawer] = useState(false);
+  const [showQuickSettings, setShowQuickSettings] = useState(false);
+  const [quickSettingsTab, setQuickSettingsTab] = useState("quality"); // 'quality' | 'captions'
   const [seasons, setSeasons] = useState([]);
   const [seasonEpisodes, setSeasonEpisodes] = useState([]);
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
@@ -407,6 +409,168 @@ export default function RedzoneVideoPlayer({
           mozallowfullscreen="true"
           onLoad={() => setIframeLoading(false)}
         />
+      </div>
+
+      {/* Floating Small Quick Option for Quality & Captions */}
+      <div className="redzone-floating-quick-wrap">
+        <div
+          className="redzone-floating-quick-pill redzone-liquid-glass-pill"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Quality Quick Button */}
+          <button
+            type="button"
+            className={`redzone-floating-quick-btn ${showQuickSettings && quickSettingsTab === "quality" ? "active" : ""}`}
+            onClick={() => {
+              if (showQuickSettings && quickSettingsTab === "quality") {
+                setShowQuickSettings(false);
+              } else {
+                setQuickSettingsTab("quality");
+                setShowQuickSettings(true);
+              }
+            }}
+            title="Change Quality / Server"
+            aria-label="Quality Settings"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span>{currentServer.quality.split("/")[0].trim()}</span>
+          </button>
+
+          <span className="redzone-floating-quick-divider" />
+
+          {/* Captions Quick Button */}
+          <button
+            type="button"
+            className={`redzone-floating-quick-btn ${showQuickSettings && quickSettingsTab === "captions" ? "active" : ""}`}
+            onClick={() => {
+              if (showQuickSettings && quickSettingsTab === "captions") {
+                setShowQuickSettings(false);
+              } else {
+                setQuickSettingsTab("captions");
+                setShowQuickSettings(true);
+              }
+            }}
+            title="Subtitles & Captions"
+            aria-label="Captions Settings"
+          >
+            <span className="redzone-cc-icon-pill">CC</span>
+            <span>Captions</span>
+          </button>
+        </div>
+
+        {/* Small Floating Settings Popover */}
+        {showQuickSettings && (
+          <div
+            className="redzone-quick-settings-popover redzone-liquid-glass-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Popover Tabs */}
+            <div className="redzone-quick-popover-tabs">
+              <button
+                type="button"
+                className={`redzone-quick-tab ${quickSettingsTab === "quality" ? "active" : ""}`}
+                onClick={() => setQuickSettingsTab("quality")}
+              >
+                Quality
+              </button>
+              <button
+                type="button"
+                className={`redzone-quick-tab ${quickSettingsTab === "captions" ? "active" : ""}`}
+                onClick={() => setQuickSettingsTab("captions")}
+              >
+                Captions (CC)
+              </button>
+              <button
+                type="button"
+                className="redzone-quick-popover-close"
+                onClick={() => setShowQuickSettings(false)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Quality Selector Content */}
+            {quickSettingsTab === "quality" && (
+              <div className="redzone-quick-tab-body">
+                <div className="redzone-quick-section-title">Stream Resolution:</div>
+                <div className="redzone-quick-options-list">
+                  {STREAMING_SERVERS.map((srv) => {
+                    const isCurrent = srv.id === serverId;
+                    return (
+                      <button
+                        key={srv.id}
+                        type="button"
+                        className={`redzone-quick-opt-row ${isCurrent ? "active" : ""}`}
+                        onClick={() => {
+                          setServerId(srv.id);
+                          storage.set("redzone_preferred_server", srv.id);
+                          setIframeLoading(true);
+                          setShowQuickSettings(false);
+                        }}
+                      >
+                        <span className="redzone-quick-opt-name">{srv.name}</span>
+                        <span className="redzone-quick-opt-badge">{srv.quality}</span>
+                        {isCurrent && <span className="redzone-quick-opt-check">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Captions Content */}
+            {quickSettingsTab === "captions" && (
+              <div className="redzone-quick-tab-body">
+                <div className="redzone-quick-section-title">Subtitles / Captions:</div>
+                <div className="redzone-quick-caption-banner">
+                  <div className="redzone-caption-badge">Multi-Language Subtitles</div>
+                  <p className="redzone-caption-desc">
+                    Server 2 (VidLink) & Server 1 provide built-in subtitles in 35+ languages.
+                  </p>
+                </div>
+
+                <div className="redzone-quick-options-list">
+                  <button
+                    type="button"
+                    className={`redzone-quick-opt-row ${serverId === "vidlink" ? "active" : ""}`}
+                    onClick={() => {
+                      setServerId("vidlink");
+                      storage.set("redzone_preferred_server", "vidlink");
+                      setIframeLoading(true);
+                      setShowQuickSettings(false);
+                    }}
+                  >
+                    <span className="redzone-quick-opt-name">Server 2 (Multi-Sub)</span>
+                    <span className="redzone-quick-opt-badge">40+ Languages</span>
+                    {serverId === "vidlink" && <span className="redzone-quick-opt-check">✓</span>}
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`redzone-quick-opt-row ${serverId === "videasy" ? "active" : ""}`}
+                    onClick={() => {
+                      setServerId("videasy");
+                      storage.set("redzone_preferred_server", "videasy");
+                      setIframeLoading(true);
+                      setShowQuickSettings(false);
+                    }}
+                  >
+                    <span className="redzone-quick-opt-name">Server 1 (English/Auto)</span>
+                    <span className="redzone-quick-opt-badge">Auto Subs</span>
+                    {serverId === "videasy" && <span className="redzone-quick-opt-check">✓</span>}
+                  </button>
+                </div>
+
+                <div className="redzone-quick-tip">
+                  Tip: Tap the <strong>CC</strong> icon in the player interface to turn subtitles on or off and choose language.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Persistent Liquid Glass Floating Controls Button */}
