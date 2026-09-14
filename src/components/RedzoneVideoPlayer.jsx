@@ -93,11 +93,58 @@ export default function RedzoneVideoPlayer({
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLandscapeLocked, setIsLandscapeLocked] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
   const containerRef = useRef(null);
   const hideTimerRef = useRef(null);
   const serverMenuRef = useRef(null);
+
+  // Fullscreen trigger function
+  const requestAutoFullscreen = useCallback(() => {
+    try {
+      const el = containerRef.current || document.documentElement;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (el.requestFullscreen) {
+          el.requestFullscreen().catch(() => {});
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen();
+        }
+      }
+    } catch (err) {}
+  }, []);
+
+  // Automatic Default Fullscreen on Player Load & First Interaction
+  useEffect(() => {
+    // 1. Attempt immediate fullscreen
+    requestAutoFullscreen();
+
+    // 2. Browser policy requires user gesture; trigger auto-fullscreen on first tap/click
+    const handleFirstGesture = () => {
+      requestAutoFullscreen();
+    };
+
+    window.addEventListener("pointerdown", handleFirstGesture, { once: true });
+    window.addEventListener("touchstart", handleFirstGesture, { once: true, passive: true });
+    window.addEventListener("click", handleFirstGesture, { once: true });
+
+    // 3. Track native fullscreen state
+    const handleFullscreenChange = () => {
+      const active = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      setIsFullscreen(active);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+
+    return () => {
+      window.removeEventListener("pointerdown", handleFirstGesture);
+      window.removeEventListener("touchstart", handleFirstGesture);
+      window.removeEventListener("click", handleFirstGesture);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+    };
+  }, [requestAutoFullscreen]);
 
   // Fetch full TV details for season counts
   useEffect(() => {
@@ -210,12 +257,40 @@ export default function RedzoneVideoPlayer({
   }, []);
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen?.().catch(() => {});
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      const el = containerRef.current || document.documentElement;
+      if (el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      }
       setIsFullscreen(true);
     } else {
-      document.exitFullscreen?.().catch(() => {});
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
       setIsFullscreen(false);
+    }
+  };
+
+  // Mobile Screen Orientation lock/toggle
+  const toggleOrientation = async () => {
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        if (!isLandscapeLocked) {
+          await screen.orientation.lock("landscape").catch(() => {});
+          setIsLandscapeLocked(true);
+        } else {
+          await screen.orientation.unlock();
+          setIsLandscapeLocked(false);
+        }
+      } else {
+        toggleFullscreen();
+      }
+    } catch (e) {
+      toggleFullscreen();
     }
   };
 
@@ -283,7 +358,7 @@ export default function RedzoneVideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="redzone-direct-player"
+      className="redzone-direct-player redzone-liquid-viewport"
       onMouseMove={resetHideTimer}
       onTouchStart={resetHideTimer}
       onClick={() => {
@@ -294,10 +369,10 @@ export default function RedzoneVideoPlayer({
       <div className="redzone-player-hover-strip redzone-player-hover-strip--top" onMouseEnter={() => setShowControls(true)} onClick={() => setShowControls(true)} />
       <div className="redzone-player-hover-strip redzone-player-hover-strip--bottom" onMouseEnter={() => setShowControls(true)} onClick={() => setShowControls(true)} />
 
-      {/* Central Video Stream (iframe) - No sandbox attribute so all streams play seamlessly */}
-      <div className="redzone-player-stage">
+      {/* Central Video Stream (iframe) with True Full-Bleed Fluid Fit */}
+      <div className="redzone-player-stage redzone-player-stage--fullscreen">
         {iframeLoading && (
-          <div className="redzone-player-spinner">
+          <div className="redzone-player-spinner redzone-liquid-glass-spinner">
             <div className="redzone-spinner-ring" />
             <div className="redzone-spinner-text">Connecting to {currentServer.name}…</div>
             <div className="redzone-spinner-subtext">{currentServer.quality} • Fast Stream</div>
@@ -308,7 +383,7 @@ export default function RedzoneVideoPlayer({
           key={`${streamUrl}-${reloadKey}`}
           src={streamUrl}
           title={title}
-          className="redzone-player-iframe"
+          className="redzone-player-iframe redzone-player-iframe--fluid"
           referrerPolicy="no-referrer"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
           allowFullScreen
@@ -316,10 +391,10 @@ export default function RedzoneVideoPlayer({
         />
       </div>
 
-      {/* Persistent Floating Controls Button (Quickly reveal controls on phones or desktop) */}
+      {/* Persistent Liquid Glass Floating Controls Button */}
       <button
         type="button"
-        className={`redzone-player-floating-trigger ${showControls ? "hidden" : ""}`}
+        className={`redzone-player-floating-trigger redzone-liquid-glass-btn ${showControls ? "hidden" : ""}`}
         onClick={(e) => {
           e.stopPropagation();
           setShowControls(true);
@@ -334,21 +409,21 @@ export default function RedzoneVideoPlayer({
         <span>Controls</span>
       </button>
 
-      {/* Top Floating Control Bar - Fully Responsive for Mobile & Desktop */}
+      {/* Top Liquid Glass Floating Header Bar */}
       <header
-        className={`redzone-player-topbar ${showControls ? "redzone-player-topbar--visible" : ""}`}
+        className={`redzone-player-topbar redzone-liquid-glass-topbar ${showControls ? "redzone-player-topbar--visible" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="redzone-player-topbar-left">
           {/* Back button */}
           <button
             type="button"
-            className="redzone-player-back-action"
+            className="redzone-player-back-action redzone-liquid-glass-btn"
             onClick={onClose}
             aria-label="Back to browse"
             title="Back to REDZONE (Esc)"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
             <span className="redzone-player-back-text">Browse</span>
@@ -359,7 +434,7 @@ export default function RedzoneVideoPlayer({
             <div className="redzone-player-title-line">
               <span className="redzone-player-title" title={title}>{title}</span>
               {year && <span className="redzone-player-year">({year})</span>}
-              <span className="redzone-quality-badge">{currentServer.quality}</span>
+              <span className="redzone-quality-badge redzone-liquid-badge">{currentServer.quality}</span>
             </div>
             {isTV && (
               <div className="redzone-player-subtitle">
@@ -375,11 +450,11 @@ export default function RedzoneVideoPlayer({
           <div className="redzone-server-dropdown-wrap" ref={serverMenuRef}>
             <button
               type="button"
-              className={`redzone-player-control-btn ${showServerMenu ? "active" : ""}`}
+              className={`redzone-player-control-btn redzone-liquid-glass-btn ${showServerMenu ? "active" : ""}`}
               onClick={() => setShowServerMenu((prev) => !prev)}
               title="Change Streaming Server & Quality"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
                 <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
                 <line x1="6" y1="6" x2="6.01" y2="6" />
@@ -388,20 +463,20 @@ export default function RedzoneVideoPlayer({
               <span className="redzone-server-current-label">
                 {currentServer.name}
               </span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </button>
 
             {showServerMenu && (
-              <div className="redzone-server-dropdown-menu">
+              <div className="redzone-server-dropdown-menu redzone-liquid-glass-panel">
                 <div className="redzone-server-menu-title">Select Server & Quality</div>
                 <div className="redzone-server-menu-scroll">
                   {STREAMING_SERVERS.map((srv) => (
                     <button
                       key={srv.id}
                       type="button"
-                      className={`redzone-server-menu-item ${srv.id === serverId ? "active" : ""}`}
+                      className={`redzone-server-menu-item redzone-liquid-menu-item ${srv.id === serverId ? "active" : ""}`}
                       onClick={() => {
                         setServerId(srv.id);
                         storage.set("redzone_preferred_server", srv.id);
@@ -424,7 +499,7 @@ export default function RedzoneVideoPlayer({
           {/* Refresh/Reload stream button */}
           <button
             type="button"
-            className="redzone-player-control-btn redzone-player-control-btn--icon"
+            className="redzone-player-control-btn redzone-player-control-btn--icon redzone-liquid-glass-btn"
             onClick={handleRefreshStream}
             title="Reload Video Stream"
             aria-label="Reload stream"
@@ -440,12 +515,12 @@ export default function RedzoneVideoPlayer({
           {isTV && (
             <button
               type="button"
-              className={`redzone-player-control-btn ${showEpisodesDrawer ? "active" : ""}`}
+              className={`redzone-player-control-btn redzone-liquid-glass-btn ${showEpisodesDrawer ? "active" : ""}`}
               onClick={() => setShowEpisodesDrawer((prev) => !prev)}
               title="Episodes"
               aria-label="Episodes list"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="8" y1="6" x2="21" y2="6" />
                 <line x1="8" y1="12" x2="21" y2="12" />
                 <line x1="8" y1="18" x2="21" y2="18" />
@@ -457,12 +532,26 @@ export default function RedzoneVideoPlayer({
             </button>
           )}
 
+          {/* Screen Orientation / Auto-Rotate on Mobile */}
+          <button
+            type="button"
+            className="redzone-player-control-btn redzone-player-control-btn--icon redzone-liquid-glass-btn redzone-phone-rotate-btn"
+            onClick={toggleOrientation}
+            title="Auto-Rotate / Fullscreen"
+            aria-label="Rotate screen"
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+              <line x1="12" y1="18" x2="12.01" y2="18" />
+            </svg>
+          </button>
+
           {/* Fullscreen Button */}
           <button
             type="button"
-            className="redzone-player-control-btn redzone-player-control-btn--icon"
+            className={`redzone-player-control-btn redzone-player-control-btn--icon redzone-liquid-glass-btn ${isFullscreen ? "active" : ""}`}
             onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
+            title={isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen Mode (F)"}
             aria-label="Toggle Fullscreen"
           >
             {isFullscreen ? (
@@ -479,7 +568,7 @@ export default function RedzoneVideoPlayer({
           {/* Close X Button */}
           <button
             type="button"
-            className="redzone-player-control-btn redzone-player-control-btn--icon redzone-player-close-btn"
+            className="redzone-player-control-btn redzone-player-control-btn--icon redzone-player-close-btn redzone-liquid-glass-btn"
             onClick={onClose}
             title="Close (Esc)"
             aria-label="Close player"
@@ -492,9 +581,9 @@ export default function RedzoneVideoPlayer({
         </div>
       </header>
 
-      {/* Bottom Floating Control & Quick Switch Bar */}
+      {/* Bottom Floating Liquid Glass Action Bar */}
       <footer
-        className={`redzone-player-bottombar ${showControls ? "visible" : ""}`}
+        className={`redzone-player-bottombar redzone-liquid-glass-bottombar ${showControls ? "visible" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="redzone-player-bottombar-left">
@@ -506,7 +595,7 @@ export default function RedzoneVideoPlayer({
                 <button
                   key={srv.id}
                   type="button"
-                  className={`redzone-quick-srv-btn ${srv.id === serverId ? "active" : ""}`}
+                  className={`redzone-quick-srv-btn redzone-liquid-glass-pill ${srv.id === serverId ? "active" : ""}`}
                   onClick={() => {
                     setServerId(srv.id);
                     storage.set("redzone_preferred_server", srv.id);
@@ -526,7 +615,7 @@ export default function RedzoneVideoPlayer({
           {isTV && hasPrevEpisode && (
             <button
               type="button"
-              className="redzone-player-skip-btn"
+              className="redzone-player-skip-btn redzone-liquid-glass-btn"
               onClick={handlePrevEpisode}
               title="Previous Episode"
             >
@@ -542,7 +631,7 @@ export default function RedzoneVideoPlayer({
           {isTV && hasNextEpisode && (
             <button
               type="button"
-              className="redzone-player-skip-btn redzone-player-skip-btn--primary"
+              className="redzone-player-skip-btn redzone-player-skip-btn--primary redzone-liquid-glass-primary-btn"
               onClick={handleNextEpisode}
               title="Next Episode"
             >
@@ -557,7 +646,7 @@ export default function RedzoneVideoPlayer({
           {/* Direct Clean Popout */}
           <button
             type="button"
-            className="redzone-player-skip-btn"
+            className="redzone-player-skip-btn redzone-liquid-glass-btn"
             onClick={() => window.open(streamUrl, "_blank", "noopener,noreferrer")}
             title="Open in Clean Popout Window"
           >
@@ -571,10 +660,10 @@ export default function RedzoneVideoPlayer({
         </div>
       </footer>
 
-      {/* TV Episodes Side Drawer / Overlay */}
+      {/* TV Episodes Side Drawer / Overlay with Liquid Glass */}
       {isTV && showEpisodesDrawer && (
         <aside
-          className="redzone-episodes-drawer"
+          className="redzone-episodes-drawer redzone-liquid-glass-drawer"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="redzone-drawer-header">
@@ -582,7 +671,7 @@ export default function RedzoneVideoPlayer({
               <h3 className="redzone-drawer-title">Episodes</h3>
               {seasons.length > 0 && (
                 <select
-                  className="redzone-drawer-season-select"
+                  className="redzone-drawer-season-select redzone-liquid-glass-select"
                   value={season}
                   onChange={(e) => {
                     setSeason(Number(e.target.value));
@@ -599,7 +688,7 @@ export default function RedzoneVideoPlayer({
             </div>
             <button
               type="button"
-              className="redzone-drawer-close"
+              className="redzone-drawer-close redzone-liquid-glass-btn"
               onClick={() => setShowEpisodesDrawer(false)}
               aria-label="Close episodes drawer"
             >
@@ -618,7 +707,7 @@ export default function RedzoneVideoPlayer({
                 return (
                   <div
                     key={ep.id}
-                    className={`redzone-drawer-episode-row ${isCurrent ? "active" : ""}`}
+                    className={`redzone-drawer-episode-row redzone-liquid-glass-row ${isCurrent ? "active" : ""}`}
                     onClick={() => {
                       setEpisode(ep.episode_number);
                       setShowEpisodesDrawer(false);

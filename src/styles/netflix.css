@@ -1466,7 +1466,7 @@ body {
 }
 
 /* ==========================================================================
-   REDZONE DIRECT FULLSCREEN VIDEO PLAYER
+   REDZONE DIRECT FULLSCREEN VIDEO PLAYER - LIQUID GLASS & AUTO FULLSCREEN
    ========================================================================== */
 .redzone-direct-player {
   position: fixed;
@@ -1477,8 +1477,23 @@ body {
   flex-direction: column;
   overflow: hidden;
   width: 100vw;
+  width: 100dvw;
   height: 100vh;
+  height: 100dvh;
   touch-action: manipulation;
+  user-select: none;
+}
+
+.redzone-liquid-viewport {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  background: #000000;
+  z-index: 100000;
+  overflow: hidden;
 }
 
 .redzone-player-stage {
@@ -1492,11 +1507,30 @@ body {
   justify-content: center;
 }
 
+.redzone-player-stage--fullscreen {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  background: #000000;
+}
+
 .redzone-player-iframe {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  border: none;
+  background: #000000;
+}
+
+.redzone-player-iframe--fluid {
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
   border: none;
   background: #000000;
 }
@@ -1511,6 +1545,11 @@ body {
   background: #080808;
   z-index: 2;
   gap: 12px;
+}
+
+.redzone-liquid-glass-spinner {
+  background: radial-gradient(circle at center, rgba(22, 22, 30, 0.95) 0%, rgba(5, 5, 8, 0.99) 100%);
+  backdrop-filter: blur(28px) saturate(180%);
 }
 
 .redzone-spinner-ring {
@@ -1558,7 +1597,7 @@ body {
   bottom: 0;
 }
 
-/* Floating Persistent Controls Trigger */
+/* Floating Persistent Controls Trigger - Liquid Glass */
 .redzone-player-floating-trigger {
   position: absolute;
   top: 18px;
@@ -1567,23 +1606,25 @@ body {
   display: flex;
   align-items: center;
   gap: 7px;
-  background: rgba(18, 18, 18, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(22, 22, 28, 0.72);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 7px 14px;
+  border-radius: 30px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.2), 0 8px 28px rgba(0, 0, 0, 0.65);
 }
 
 .redzone-player-floating-trigger:hover {
   background: var(--netflix-red);
   border-color: var(--netflix-red);
   transform: scale(1.04);
+  box-shadow: 0 4px 20px rgba(229, 9, 20, 0.5);
 }
 
 .redzone-player-floating-trigger.hidden {
@@ -1591,7 +1632,7 @@ body {
   pointer-events: none;
 }
 
-/* Player Top Control Bar */
+/* Player Top Control Bar - Liquid Glass */
 .redzone-player-topbar {
   position: absolute;
   top: 0;
@@ -1603,7 +1644,9 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.6) 65%, transparent 100%);
+  background: linear-gradient(180deg, rgba(10, 10, 14, 0.9) 0%, rgba(10, 10, 14, 0.45) 70%, transparent 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1621,16 +1664,27 @@ body {
   min-width: 0;
 }
 
+/* Liquid Glass Buttons */
+.redzone-liquid-glass-btn {
+  background: rgba(26, 26, 34, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.22), 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+.redzone-liquid-glass-btn:hover {
+  background: rgba(42, 42, 54, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
 .redzone-player-back-action {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(20, 20, 20, 0.85);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
   color: #ffffff;
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -1639,8 +1693,8 @@ body {
 }
 
 .redzone-player-back-action:hover {
-  background: rgba(229, 9, 20, 0.9);
-  border-color: var(--netflix-red);
+  background: rgba(229, 9, 20, 0.9) !important;
+  border-color: var(--netflix-red) !important;
   transform: translateX(-2px);
 }
 
@@ -1676,15 +1730,20 @@ body {
 }
 
 .redzone-quality-badge {
-  background: rgba(229, 9, 20, 0.2);
+  background: rgba(229, 9, 20, 0.22);
   border: 1px solid var(--netflix-red);
   color: #ff4d58;
   font-size: 11px;
   font-weight: 700;
   padding: 2px 7px;
-  border-radius: 3px;
+  border-radius: 4px;
   letter-spacing: 0.3px;
   text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+.redzone-liquid-badge {
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .redzone-player-subtitle {
@@ -1699,7 +1758,7 @@ body {
 .redzone-player-topbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
@@ -1707,12 +1766,9 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(20, 20, 20, 0.85);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
   color: #ffffff;
   padding: 8px 14px;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -1720,14 +1776,9 @@ body {
   white-space: nowrap;
 }
 
-.redzone-player-control-btn:hover {
-  background: rgba(35, 35, 35, 0.95);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
 .redzone-player-control-btn.active {
-  background: rgba(229, 9, 20, 0.85);
-  border-color: var(--netflix-red);
+  background: var(--netflix-red) !important;
+  border-color: var(--netflix-red) !important;
 }
 
 .redzone-player-control-btn--icon {
@@ -1735,11 +1786,11 @@ body {
 }
 
 .redzone-player-close-btn:hover {
-  background: rgba(229, 9, 20, 0.85);
-  border-color: var(--netflix-red);
+  background: rgba(229, 9, 20, 0.9) !important;
+  border-color: var(--netflix-red) !important;
 }
 
-/* Server Dropdown */
+/* Server Dropdown - Liquid Glass Panel */
 .redzone-server-dropdown-wrap {
   position: relative;
 }
@@ -1750,16 +1801,20 @@ body {
   right: 0;
   width: 290px;
   max-width: calc(100vw - 24px);
-  background: rgba(20, 20, 20, 0.98);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
   padding: 8px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85);
   display: flex;
   flex-direction: column;
   gap: 4px;
   z-index: 100020;
+}
+
+.redzone-liquid-glass-panel {
+  background: rgba(18, 18, 24, 0.88) !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25), 0 16px 48px rgba(0, 0, 0, 0.85) !important;
 }
 
 .redzone-server-menu-title {
@@ -1790,7 +1845,7 @@ body {
   border: none;
   color: #e5e5e5;
   padding: 9px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -1800,13 +1855,14 @@ body {
 }
 
 .redzone-server-menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
 }
 
 .redzone-server-menu-item.active {
-  background: rgba(229, 9, 20, 0.2);
-  color: var(--netflix-red);
+  background: rgba(229, 9, 20, 0.25);
+  border: 1px solid rgba(229, 9, 20, 0.5);
+  color: #ff4d58;
   font-weight: 700;
 }
 
@@ -1831,7 +1887,7 @@ body {
   font-weight: 800;
 }
 
-/* Bottom Floating Control Bar */
+/* Bottom Floating Control Bar - Liquid Glass */
 .redzone-player-bottombar {
   position: absolute;
   bottom: 0;
@@ -1843,7 +1899,9 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.6) 65%, transparent 100%);
+  background: linear-gradient(0deg, rgba(10, 10, 14, 0.9) 0%, rgba(10, 10, 14, 0.45) 70%, transparent 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s ease;
@@ -1898,11 +1956,9 @@ body {
 }
 
 .redzone-quick-srv-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #d1d1d1;
-  padding: 6px 11px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -1915,15 +1971,25 @@ body {
   justify-content: center;
 }
 
+.redzone-liquid-glass-pill {
+  background: rgba(26, 26, 34, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.18);
+}
+
 .redzone-quick-srv-btn:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(45, 45, 58, 0.9);
   color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .redzone-quick-srv-btn.active {
-  background: var(--netflix-red);
-  border-color: var(--netflix-red);
+  background: var(--netflix-red) !important;
+  border-color: var(--netflix-red) !important;
   color: #ffffff;
+  box-shadow: 0 0 14px rgba(229, 9, 20, 0.5);
 }
 
 .redzone-player-bottombar-right {
@@ -1937,49 +2003,45 @@ body {
   display: flex;
   align-items: center;
   gap: 7px;
-  background: rgba(28, 28, 28, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
   padding: 8px 14px;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
 }
 
-.redzone-player-skip-btn:hover {
-  background: rgba(45, 45, 45, 0.95);
-  border-color: rgba(255, 255, 255, 0.5);
+.redzone-liquid-glass-primary-btn {
+  background: var(--netflix-red) !important;
+  border-color: var(--netflix-red) !important;
+  box-shadow: 0 4px 18px rgba(229, 9, 20, 0.55) !important;
+}
+
+.redzone-liquid-glass-primary-btn:hover {
+  background: var(--netflix-red-hover) !important;
   transform: translateY(-1px);
 }
 
-.redzone-player-skip-btn--primary {
-  background: var(--netflix-red);
-  border-color: var(--netflix-red);
-}
-
-.redzone-player-skip-btn--primary:hover {
-  background: var(--netflix-red-hover);
-  border-color: var(--netflix-red-hover);
-}
-
-/* Episodes Drawer */
+/* Episodes Drawer - Liquid Glass */
 .redzone-episodes-drawer {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
   width: min(440px, 92vw);
-  background: rgba(18, 18, 18, 0.98);
-  backdrop-filter: blur(24px);
-  border-left: 1px solid rgba(255, 255, 255, 0.15);
   z-index: 100025;
   display: flex;
   flex-direction: column;
-  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.85);
   animation: redzoneDrawerSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.redzone-liquid-glass-drawer {
+  background: rgba(14, 14, 20, 0.88) !important;
+  backdrop-filter: blur(32px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.9) !important;
 }
 
 @keyframes redzoneDrawerSlide {
@@ -1992,7 +2054,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .redzone-drawer-title-wrap {
@@ -2008,12 +2070,13 @@ body {
   margin: 0;
 }
 
-.redzone-drawer-season-select {
-  background: #262626;
+.redzone-liquid-glass-select {
+  background: rgba(28, 28, 36, 0.85) !important;
+  backdrop-filter: blur(16px);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
   outline: none;
@@ -2021,12 +2084,13 @@ body {
 }
 
 .redzone-drawer-close {
+  color: #a3a3a3;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
   background: transparent;
   border: none;
-  color: #a3a3a3;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px;
 }
 
 .redzone-drawer-close:hover {
@@ -2047,20 +2111,24 @@ body {
   display: flex;
   gap: 14px;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid transparent;
   transition: all 0.2s ease;
 }
 
+.redzone-liquid-glass-row {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
 .redzone-drawer-episode-row:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .redzone-drawer-episode-row.active {
-  background: rgba(229, 9, 20, 0.15);
+  background: rgba(229, 9, 20, 0.2);
   border-color: var(--netflix-red);
 }
 
@@ -2068,10 +2136,10 @@ body {
   position: relative;
   width: 120px;
   aspect-ratio: 16/9;
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
   flex-shrink: 0;
-  background: #232323;
+  background: #1c1c24;
 }
 
 .redzone-drawer-ep-thumb {
