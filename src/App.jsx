@@ -54,6 +54,7 @@ import NetflixBrowsePage from "./pages/NetflixBrowsePage";
 import NetflixSearchPage from "./pages/NetflixSearchPage";
 import RedzoneVideoPlayer from "./components/RedzoneVideoPlayer";
 import RedzoneIntroAnimation from "./components/RedzoneIntroAnimation";
+import NetworkOfflineModal from "./components/NetworkOfflineModal";
 import "./styles/netflix.css";
 
 import {
@@ -1639,6 +1640,7 @@ export default function App() {
         {showShortcuts && (
           <KeyboardShortcutsModal onClose={() => setShowShortcuts(false)} />
         )}
+        <NetworkOfflineModal />
 
         {/* ── REDZONE Mobile Bottom Navigation ── */}
         <nav className="mobile-dock-bar" aria-label="Mobile Navigation">
