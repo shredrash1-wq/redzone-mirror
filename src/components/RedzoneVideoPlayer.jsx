@@ -5,39 +5,66 @@ import { storage } from "../utils/storage";
 const STREAMING_SERVERS = [
   {
     id: "videasy",
-    label: "Server 1 (Videasy - Sandbox Safe)",
+    name: "Server 1",
+    label: "Server 1 (Videasy - 1080p HD)",
+    quality: "1080p HD",
+    tag: "Ad-Free / Fast",
     getMovieUrl: (id) => `https://player.videasy.to/movie/${id}?color=e50914`,
     getTvUrl: (id, s, e) => `https://player.videasy.to/tv/${id}/${s}/${e}?color=e50914`,
   },
   {
-    id: "vidking",
-    label: "Server 2 (Vidking - Ultra HD)",
-    getMovieUrl: (id) => `https://www.vidking.net/embed/movie/${id}?autoPlay=true&color=e50914`,
-    getTvUrl: (id, s, e) => `https://www.vidking.net/embed/tv/${id}/${s}/${e}?autoPlay=true&color=e50914`,
+    id: "vidlink",
+    name: "Server 2",
+    label: "Server 2 (VidLink - 4K / Multi-Audio)",
+    quality: "4K / Multi-Sub",
+    tag: "Multi-Audio",
+    getMovieUrl: (id) => `https://vidlink.pro/movie/${id}?primaryColor=e50914&secondaryColor=141414`,
+    getTvUrl: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}?primaryColor=e50914&secondaryColor=141414`,
   },
   {
     id: "autoembed",
-    label: "Server 3 (AutoEmbed)",
+    name: "Server 3",
+    label: "Server 3 (AutoEmbed - Multi CDN)",
+    quality: "Auto / 1080p",
+    tag: "Fast CDN",
     getMovieUrl: (id) => `https://player.autoembed.cc/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`,
   },
   {
-    id: "vidlink",
-    label: "Server 4 (VidLink Pro)",
-    getMovieUrl: (id) => `https://vidlink.pro/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
+    id: "vidsrc_icu",
+    name: "Server 4",
+    label: "Server 4 (VidSrc ICU - High Speed)",
+    quality: "1080p",
+    tag: "High Speed",
+    getMovieUrl: (id) => `https://vidsrc.icu/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidsrc.icu/embed/tv/${id}/${s}/${e}`,
+  },
+  {
+    id: "smashy",
+    name: "Server 5",
+    label: "Server 5 (SmashyStream - Multi Sources)",
+    quality: "Multi-Source",
+    tag: "Reliable",
+    getMovieUrl: (id) => `https://embed.smashystream.com/playere.php?tmdb=${id}`,
+    getTvUrl: (id, s, e) => `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`,
   },
   {
     id: "twoembed",
-    label: "Server 5 (2Embed)",
+    name: "Server 6",
+    label: "Server 6 (2Embed - Mirror)",
+    quality: "HD 720p/1080p",
+    tag: "Mirror",
     getMovieUrl: (id) => `https://www.2embed.cc/embed/${id}`,
     getTvUrl: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
   },
   {
-    id: "vidsrc",
-    label: "Server 6 (VidSrc - Fast)",
-    getMovieUrl: (id) => `https://vsembed.su/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vsembed.su/embed/tv/${id}/${s}/${e}`,
+    id: "vidking",
+    name: "Server 7",
+    label: "Server 7 (Vidking - Direct)",
+    quality: "Direct HD",
+    tag: "Direct",
+    getMovieUrl: (id) => `https://www.vidking.net/embed/movie/${id}?autoPlay=true&color=e50914`,
+    getTvUrl: (id, s, e) => `https://www.vidking.net/embed/tv/${id}/${s}/${e}?autoPlay=true&color=e50914`,
   },
 ];
 
@@ -66,6 +93,7 @@ export default function RedzoneVideoPlayer({
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const containerRef = useRef(null);
   const hideTimerRef = useRef(null);
@@ -125,7 +153,7 @@ export default function RedzoneVideoPlayer({
     }
   }, [itemId, isTV, season, episode, mediaType, item, onRecordHistory]);
 
-  // Auto-hide controls after 3.5s inactivity
+  // Auto-hide controls after 4s inactivity
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
     clearTimeout(hideTimerRef.current);
@@ -133,7 +161,7 @@ export default function RedzoneVideoPlayer({
       if (!showServerMenu && !showEpisodesDrawer) {
         setShowControls(false);
       }
-    }, 3500);
+    }, 4000);
   }, [showServerMenu, showEpisodesDrawer]);
 
   useEffect(() => {
@@ -141,7 +169,7 @@ export default function RedzoneVideoPlayer({
     return () => clearTimeout(hideTimerRef.current);
   }, [resetHideTimer]);
 
-  // Handle keyboard shortcuts: ESC to close, F for fullscreen
+  // Handle keyboard shortcuts: ESC to close, F for fullscreen, S for servers
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -155,6 +183,9 @@ export default function RedzoneVideoPlayer({
       }
       if (e.key.toLowerCase() === "f" && !e.target.closest("input, select")) {
         toggleFullscreen();
+      }
+      if (e.key.toLowerCase() === "s" && !e.target.closest("input, select")) {
+        setShowServerMenu((prev) => !prev);
       }
       resetHideTimer();
     };
@@ -184,6 +215,11 @@ export default function RedzoneVideoPlayer({
     }
   };
 
+  const handleRefreshStream = () => {
+    setIframeLoading(true);
+    setReloadKey((prev) => prev + 1);
+  };
+
   const currentServer = useMemo(() => {
     return STREAMING_SERVERS.find((s) => s.id === serverId) || STREAMING_SERVERS[0];
   }, [serverId]);
@@ -209,6 +245,12 @@ export default function RedzoneVideoPlayer({
     return currentSeasonIdx >= 0 && currentSeasonIdx < seasons.length - 1;
   }, [isTV, seasonEpisodes, episode, seasons, season]);
 
+  const hasPrevEpisode = useMemo(() => {
+    if (!isTV) return false;
+    if (episode > 1) return true;
+    return season > 1;
+  }, [isTV, season, episode]);
+
   const handleNextEpisode = () => {
     const currentIndex = seasonEpisodes.findIndex((e) => e.episode_number === episode);
     if (currentIndex >= 0 && currentIndex < seasonEpisodes.length - 1) {
@@ -223,6 +265,17 @@ export default function RedzoneVideoPlayer({
     }
   };
 
+  const handlePrevEpisode = () => {
+    if (episode > 1) {
+      setEpisode(episode - 1);
+      return;
+    }
+    if (season > 1) {
+      setSeason(season - 1);
+      setEpisode(1);
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -233,26 +286,51 @@ export default function RedzoneVideoPlayer({
         if (!showControls) setShowControls(true);
       }}
     >
-      {/* Central Video Stream (iframe) */}
+      {/* Invisible Hover Zones to bring controls up smoothly */}
+      <div className="redzone-player-hover-strip redzone-player-hover-strip--top" onMouseEnter={() => setShowControls(true)} />
+      <div className="redzone-player-hover-strip redzone-player-hover-strip--bottom" onMouseEnter={() => setShowControls(true)} />
+
+      {/* Central Video Stream (iframe) with Anti-Popup & Anti-Redirect Sandboxing */}
       <div className="redzone-player-stage">
         {iframeLoading && (
           <div className="redzone-player-spinner">
             <div className="redzone-spinner-ring" />
             <div className="redzone-spinner-text">Connecting to {currentServer.label}…</div>
+            <div className="redzone-spinner-subtext">No Ads • {currentServer.quality}</div>
           </div>
         )}
 
         <iframe
-          key={streamUrl}
+          key={`${streamUrl}-${reloadKey}`}
           src={streamUrl}
           title={title}
           className="redzone-player-iframe"
           referrerPolicy="no-referrer"
+          /* Sandbox blocks popups, new window opening, top navigation redirects */
+          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
           allowFullScreen
           onLoad={() => setIframeLoading(false)}
         />
       </div>
+
+      {/* Persistent Floating Controls Button (Always accessible even during playback) */}
+      <button
+        type="button"
+        className={`redzone-player-floating-trigger ${showControls ? "hidden" : ""}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowControls(true);
+        }}
+        title="Show Player Controls & Servers"
+        aria-label="Show Controls"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+        <span>Controls</span>
+      </button>
 
       {/* Top Floating Control Bar */}
       <header
@@ -279,6 +357,7 @@ export default function RedzoneVideoPlayer({
             <div className="redzone-player-title-line">
               <span className="redzone-player-title">{title}</span>
               {year && <span className="redzone-player-year">({year})</span>}
+              <span className="redzone-quality-badge">{currentServer.quality}</span>
             </div>
             {isTV && (
               <div className="redzone-player-subtitle">
@@ -294,9 +373,9 @@ export default function RedzoneVideoPlayer({
           <div className="redzone-server-dropdown-wrap" ref={serverMenuRef}>
             <button
               type="button"
-              className="redzone-player-control-btn"
+              className={`redzone-player-control-btn ${showServerMenu ? "active" : ""}`}
               onClick={() => setShowServerMenu((prev) => !prev)}
-              title="Change Streaming Server"
+              title="Change Streaming Server & Quality"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
@@ -305,7 +384,7 @@ export default function RedzoneVideoPlayer({
                 <line x1="6" y1="18" x2="6.01" y2="18" />
               </svg>
               <span className="redzone-server-current-label">
-                {currentServer.label.split(" ")[1] || "Server"}
+                {currentServer.name}
               </span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="6 9 12 15 18 9" />
@@ -314,7 +393,7 @@ export default function RedzoneVideoPlayer({
 
             {showServerMenu && (
               <div className="redzone-server-dropdown-menu">
-                <div className="redzone-server-menu-title">Select Playback Server</div>
+                <div className="redzone-server-menu-title">Select Playback Server & Quality</div>
                 {STREAMING_SERVERS.map((srv) => (
                   <button
                     key={srv.id}
@@ -327,13 +406,30 @@ export default function RedzoneVideoPlayer({
                       setIframeLoading(true);
                     }}
                   >
-                    <span>{srv.label}</span>
+                    <div className="redzone-server-item-left">
+                      <span className="redzone-server-item-label">{srv.label}</span>
+                      <span className="redzone-server-item-tag">{srv.tag}</span>
+                    </div>
                     {srv.id === serverId && <span className="redzone-server-active-check">✓</span>}
                   </button>
                 ))}
               </div>
             )}
           </div>
+
+          {/* Refresh/Reload stream button */}
+          <button
+            type="button"
+            className="redzone-player-control-btn redzone-player-control-btn--icon"
+            onClick={handleRefreshStream}
+            title="Reload Video Stream"
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          </button>
 
           {/* TV Episodes Drawer Button */}
           {isTV && (
@@ -388,26 +484,82 @@ export default function RedzoneVideoPlayer({
         </div>
       </header>
 
-      {/* Floating Next Episode Action */}
-      {isTV && hasNextEpisode && (
-        <div
-          className={`redzone-player-next-ep-wrap ${showControls ? "visible" : ""}`}
-          onClick={(e) => e.stopPropagation()}
-        >
+      {/* Bottom Floating Control & Quick Switch Bar */}
+      <footer
+        className={`redzone-player-bottombar ${showControls ? "visible" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="redzone-player-bottombar-left">
+          {/* Quick Server Switcher Pills */}
+          <div className="redzone-quick-servers">
+            <span className="redzone-quick-label">Servers:</span>
+            {STREAMING_SERVERS.slice(0, 5).map((srv) => (
+              <button
+                key={srv.id}
+                type="button"
+                className={`redzone-quick-srv-btn ${srv.id === serverId ? "active" : ""}`}
+                onClick={() => {
+                  setServerId(srv.id);
+                  storage.set("redzone_preferred_server", srv.id);
+                  setIframeLoading(true);
+                }}
+                title={srv.label}
+              >
+                {srv.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="redzone-player-bottombar-right">
+          {/* Previous Episode Button (TV) */}
+          {isTV && hasPrevEpisode && (
+            <button
+              type="button"
+              className="redzone-player-skip-btn"
+              onClick={handlePrevEpisode}
+              title="Previous Episode"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <line x1="5" y1="5" x2="5" y2="19" stroke="currentColor" strokeWidth="3" />
+                <polygon points="19 20 9 12 19 4 19 20" />
+              </svg>
+              <span>Prev Ep</span>
+            </button>
+          )}
+
+          {/* Next Episode Button (TV) */}
+          {isTV && hasNextEpisode && (
+            <button
+              type="button"
+              className="redzone-player-skip-btn redzone-player-skip-btn--primary"
+              onClick={handleNextEpisode}
+              title="Next Episode"
+            >
+              <span>Next Ep</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 4 15 12 5 20 5 4" />
+                <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" strokeWidth="3" />
+              </svg>
+            </button>
+          )}
+
+          {/* Direct Clean Popout */}
           <button
             type="button"
-            className="redzone-player-next-ep-btn"
-            onClick={handleNextEpisode}
-            title="Play Next Episode"
+            className="redzone-player-skip-btn"
+            onClick={() => window.open(streamUrl, "_blank", "noopener,noreferrer")}
+            title="Open in Clean Popout Window"
           >
-            <span>Next Episode</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 4 15 12 5 20 5 4" />
-              <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" strokeWidth="3" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
             </svg>
+            <span>Popout</span>
           </button>
         </div>
-      )}
+      </footer>
 
       {/* TV Episodes Side Drawer / Overlay */}
       {isTV && showEpisodesDrawer && (

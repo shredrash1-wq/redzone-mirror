@@ -1,52 +1,59 @@
 import { useEffect, useState, useRef } from "react";
-import { playTudumSound } from "../utils/tudumSound";
+import { playTudumSound, resetTudumSound } from "../utils/tudumSound";
 import NetflixLogo from "./NetflixLogo";
 
 export default function RedzoneIntroAnimation({ onComplete }) {
-  const [hasStartedAudio, setHasStartedAudio] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [audioTriggered, setAudioTriggered] = useState(false);
   const timerRef = useRef(null);
 
-  const startSoundAndTimer = () => {
-    if (!hasStartedAudio) {
-      playTudumSound();
-      setHasStartedAudio(true);
-    }
+  const triggerAudio = (force = false) => {
+    playTudumSound({ force });
+    setAudioTriggered(true);
   };
 
   useEffect(() => {
-    // Attempt automatic playback
-    startSoundAndTimer();
+    resetTudumSound();
 
-    // Start fade out at 2.7s
-    const fadeTimer = setTimeout(() => {
-      setIsFadingOut(true);
-    }, 2700);
+    // 1. Attempt immediate audio playback
+    triggerAudio();
 
-    // Fully complete at 3.3s
-    timerRef.current = setTimeout(() => {
-      onComplete?.();
-    }, 3300);
-
-    const handleInteraction = () => {
-      startSoundAndTimer();
+    // 2. Attach instant interaction listeners across window to unlock audio instantly on first gesture
+    const handleGesture = () => {
+      triggerAudio(true);
     };
 
-    window.addEventListener("pointerdown", handleInteraction, { once: true });
-    window.addEventListener("keydown", handleInteraction, { once: true });
+    window.addEventListener("pointerdown", handleGesture, { passive: true });
+    window.addEventListener("touchstart", handleGesture, { passive: true });
+    window.addEventListener("click", handleGesture, { passive: true });
+    window.addEventListener("keydown", handleGesture, { passive: true });
+
+    // 3. Start fade out at 2.8s
+    const fadeTimer = setTimeout(() => {
+      setIsFadingOut(true);
+    }, 2800);
+
+    // 4. Fully complete at 3.4s
+    timerRef.current = setTimeout(() => {
+      onComplete?.();
+    }, 3400);
 
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(timerRef.current);
-      window.removeEventListener("pointerdown", handleInteraction);
-      window.removeEventListener("keydown", handleInteraction);
+      window.removeEventListener("pointerdown", handleGesture);
+      window.removeEventListener("touchstart", handleGesture);
+      window.removeEventListener("click", handleGesture);
+      window.removeEventListener("keydown", handleGesture);
     };
   }, [onComplete]);
 
   return (
     <div
       className={`redzone-intro-container ${isFadingOut ? "redzone-intro-fade-out" : ""}`}
-      onClick={startSoundAndTimer}
+      onClick={() => triggerAudio(true)}
+      role="banner"
+      aria-label="REDZONE Intro"
     >
       {/* Cinematic Ribbon Lines Effect */}
       <div className="redzone-intro-ribbons" aria-hidden="true">
@@ -63,6 +70,13 @@ export default function RedzoneIntroAnimation({ onComplete }) {
         <NetflixLogo width={320} height={90} className="redzone-intro-logo" />
         <div className="redzone-intro-light-beam" />
       </div>
+
+      {/* Subtle audio indicator if browser requires tap */}
+      {!audioTriggered && (
+        <div className="redzone-intro-sound-prompt" onClick={() => triggerAudio(true)}>
+          <span>🔊 Tap anywhere for sound</span>
+        </div>
+      )}
     </div>
   );
 }

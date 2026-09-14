@@ -4,7 +4,7 @@
 let sharedAudioCtx = null;
 let soundPlayed = false;
 
-function getAudioContext() {
+export function getAudioContext() {
   if (!sharedAudioCtx || sharedAudioCtx.state === "closed") {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (AudioCtx) {
@@ -14,19 +14,26 @@ function getAudioContext() {
   return sharedAudioCtx;
 }
 
-export function playTudumSound() {
-  if (soundPlayed) return;
+export function resetTudumSound() {
+  soundPlayed = false;
+}
+
+export function playTudumSound({ force = false } = {}) {
+  if (soundPlayed && !force) return;
 
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
 
     if (ctx.state === "suspended") {
-      ctx.resume().then(() => {
-        if (!soundPlayed && ctx.state === "running") {
-          synthesizeTudum(ctx);
-        }
-      }).catch(() => {});
+      ctx
+        .resume()
+        .then(() => {
+          if ((!soundPlayed || force) && ctx.state === "running") {
+            synthesizeTudum(ctx);
+          }
+        })
+        .catch(() => {});
     } else if (ctx.state === "running") {
       synthesizeTudum(ctx);
     }
@@ -36,7 +43,6 @@ export function playTudumSound() {
 }
 
 function synthesizeTudum(ctx) {
-  if (soundPlayed) return;
   soundPlayed = true;
 
   try {
@@ -100,9 +106,9 @@ function synthesizeTudum(ctx) {
     // ── 4. Warm Cello / Ambient Resonant Swell (D - A - D - F) ────────
     const chordNotes = [
       { freq: 146.83, delay: 0.26, duration: 2.8, gain: 0.35 }, // D3
-      { freq: 220.0, delay: 0.29, duration: 2.6, gain: 0.30 },  // A3
+      { freq: 220.0, delay: 0.29, duration: 2.6, gain: 0.3 }, // A3
       { freq: 293.66, delay: 0.32, duration: 2.7, gain: 0.25 }, // D4
-      { freq: 349.23, delay: 0.35, duration: 2.4, gain: 0.20 }, // F4
+      { freq: 349.23, delay: 0.35, duration: 2.4, gain: 0.2 }, // F4
     ];
 
     chordNotes.forEach(({ freq, delay, duration, gain: targetGain }) => {
