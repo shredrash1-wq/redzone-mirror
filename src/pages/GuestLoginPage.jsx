@@ -1,287 +1,363 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NetflixLogo from "../components/NetflixLogo";
+import { storage } from "../utils/storage";
 
-const NETFLIX_PROFILES = [
-  {
-    id: "primary",
-    name: "User",
-    color: "#E50914",
-    avatarIcon: "😊",
-    avatarLabel: "Red Smile",
-  },
-  {
-    id: "cinephile",
-    name: "Cinephile",
-    color: "#0071eb",
-    avatarIcon: "🎬",
-    avatarLabel: "Blue Critic",
-  },
-  {
-    id: "kids",
-    name: "Kids",
-    color: "#ffaa00",
-    avatarIcon: "👶",
-    avatarLabel: "Kids",
-    isKids: true,
-  },
-  {
-    id: "guest",
-    name: "Guest",
-    color: "#2bb871",
-    avatarIcon: "🍿",
-    avatarLabel: "Green Guest",
-  },
+const AVATAR_OPTIONS = [
+  { icon: "🍿", label: "Popcorn" },
+  { icon: "🎬", label: "Cinema" },
+  { icon: "👑", label: "Crown" },
+  { icon: "🕶️", label: "Shades" },
+  { icon: "🚀", label: "Rocket" },
+  { icon: "🦊", label: "Fox" },
+  { icon: "⚡", label: "Lightning" },
+  { icon: "🎮", label: "Gamer" },
+  { icon: "🎧", label: "Beats" },
+  { icon: "🦁", label: "Lion" },
+  { icon: "🍕", label: "Pizza" },
+  { icon: "💎", label: "Diamond" },
+  { icon: "🤖", label: "Robot" },
+  { icon: "🐱", label: "Cat" },
+  { icon: "🌟", label: "Star" },
 ];
 
+const COLOR_OPTIONS = [
+  { hex: "#E50914", name: "Redzone Red" },
+  { hex: "#0071eb", name: "Electric Blue" },
+  { hex: "#ffaa00", name: "Amber Gold" },
+  { hex: "#9933cc", name: "Royal Purple" },
+  { hex: "#2bb871", name: "Emerald Green" },
+  { hex: "#e91e63", name: "Neon Pink" },
+];
+
+const PROFILES_STORAGE_KEY = "redzone_user_profiles";
+
 export default function GuestLoginPage({ onLogin }) {
-  const [customName, setCustomName] = useState("");
-  const [showAddProfile, setShowAddProfile] = useState(false);
+  // Load only user-created profiles from storage; start with an empty array if none exist
+  const [profiles, setProfiles] = useState(() => {
+    const saved = storage.get(PROFILES_STORAGE_KEY);
+    return Array.isArray(saved) ? saved : [];
+  });
+
+  const [isManaging, setIsManaging] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(null);
+
+  // Form State for creating / editing
+  const [formName, setFormName] = useState("");
+  const [formAvatar, setFormAvatar] = useState(AVATAR_OPTIONS[0].icon);
+  const [formColor, setFormColor] = useState(COLOR_OPTIONS[0].hex);
+  const [formIsKids, setFormIsKids] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  // Automatically prompt to create profile if no profiles exist yet
+  useEffect(() => {
+    if (profiles.length === 0) {
+      setShowCreateModal(true);
+    }
+  }, [profiles.length]);
+
+  const saveProfilesToStorage = (updatedList) => {
+    setProfiles(updatedList);
+    storage.set(PROFILES_STORAGE_KEY, updatedList);
+  };
 
   const handleSelectProfile = (profile) => {
+    if (isManaging) {
+      // Open edit mode for this profile
+      setEditingProfile(profile);
+      setFormName(profile.name);
+      setFormAvatar(profile.avatar || AVATAR_OPTIONS[0].icon);
+      setFormColor(profile.color || COLOR_OPTIONS[0].hex);
+      setFormIsKids(Boolean(profile.isKids));
+      setFormError("");
+      return;
+    }
+
     onLogin({
+      id: profile.id,
       username: profile.name,
-      avatar: profile.avatarIcon,
-      color: profile.color,
-      isKids: !!profile.isKids,
+      avatar: profile.avatar || "👤",
+      color: profile.color || "#E50914",
+      isKids: Boolean(profile.isKids),
       loginTime: Date.now(),
     });
   };
 
-  const handleCreateCustom = (e) => {
+  const handleOpenCreate = () => {
+    setEditingProfile(null);
+    setFormName("");
+    setFormAvatar(AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)].icon);
+    setFormColor(COLOR_OPTIONS[Math.floor(Math.random() * COLOR_OPTIONS.length)].hex);
+    setFormIsKids(false);
+    setFormError("");
+    setShowCreateModal(true);
+  };
+
+  const handleSaveProfile = (e) => {
     e.preventDefault();
-    const finalName = customName.trim() || "New Viewer";
-    onLogin({
-      username: finalName,
-      avatar: "👤",
-      color: "#9933cc",
-      loginTime: Date.now(),
-    });
+    const trimmed = formName.trim();
+    if (!trimmed) {
+      setFormError("Please enter a profile name.");
+      return;
+    }
+
+    if (editingProfile) {
+      // Update existing profile
+      const updated = profiles.map((p) =>
+        p.id === editingProfile.id
+          ? {
+              ...p,
+              name: trimmed,
+              avatar: formAvatar,
+              color: formColor,
+              isKids: formIsKids,
+            }
+          : p
+      );
+      saveProfilesToStorage(updated);
+      setEditingProfile(null);
+    } else {
+      // Create new profile
+      const newProfile = {
+        id: "profile_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+        name: trimmed,
+        avatar: formAvatar,
+        color: formColor,
+        isKids: formIsKids,
+        createdAt: Date.now(),
+      };
+      const updated = [...profiles, newProfile];
+      saveProfilesToStorage(updated);
+      setShowCreateModal(false);
+
+      // If it was their first profile, log in immediately
+      if (profiles.length === 0) {
+        onLogin({
+          id: newProfile.id,
+          username: newProfile.name,
+          avatar: newProfile.avatar,
+          color: newProfile.color,
+          isKids: Boolean(newProfile.isKids),
+          loginTime: Date.now(),
+        });
+      }
+    }
+  };
+
+  const handleDeleteProfile = (idToDelete) => {
+    const updated = profiles.filter((p) => p.id !== idToDelete);
+    saveProfilesToStorage(updated);
+    setEditingProfile(null);
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#141414",
-        color: "#ffffff",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 20px",
-        fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, sans-serif",
-      }}
-    >
-      {/* Netflix Logo */}
-      <div style={{ position: "absolute", top: 32, left: "4%" }}>
-        <NetflixLogo width={120} height={35} />
-      </div>
+    <div className="redzone-profile-screen">
+      {/* Top Left REDZONE Logo */}
+      <header className="redzone-profile-header">
+        <NetflixLogo width={130} height={38} />
+      </header>
 
-      <div style={{ maxWidth: 800, width: "100%", textAlign: "center" }}>
-        <h1
-          style={{
-            fontSize: "clamp(32px, 4vw, 56px)",
-            fontWeight: 500,
-            marginBottom: 48,
-            letterSpacing: "-0.5px",
-          }}
-        >
-          Who's watching?
+      {/* Main Content: Profiles Selection */}
+      <main className="redzone-profile-main">
+        <h1 className="redzone-profile-title">
+          {isManaging ? "Manage Profiles" : "Who's watching?"}
         </h1>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "flex-start",
-            gap: "clamp(16px, 3vw, 36px)",
-            flexWrap: "wrap",
-            marginBottom: 56,
-          }}
-        >
-          {NETFLIX_PROFILES.map((profile) => (
+        <div className="redzone-profile-grid">
+          {profiles.map((profile) => (
             <div
               key={profile.id}
+              className="redzone-profile-item"
               onClick={() => handleSelectProfile(profile)}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                cursor: "pointer",
-                width: "clamp(100px, 12vw, 140px)",
-                transition: "transform 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                const box = e.currentTarget.querySelector(".profile-box");
-                if (box) box.style.borderColor = "#ffffff";
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                const box = e.currentTarget.querySelector(".profile-box");
-                if (box) box.style.borderColor = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
             >
               <div
-                className="profile-box"
-                style={{
-                  width: "100%",
-                  aspectRatio: "1/1",
-                  borderRadius: 6,
-                  backgroundColor: profile.color,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 48,
-                  border: "3px solid transparent",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-                  transition: "border-color 0.2s ease",
-                }}
+                className="redzone-profile-avatar-box"
+                style={{ backgroundColor: profile.color || "#E50914" }}
               >
-                {profile.avatarIcon}
+                <span className="redzone-profile-avatar-symbol">{profile.avatar}</span>
+                {isManaging && (
+                  <div className="redzone-profile-edit-overlay">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </div>
+                )}
+                {profile.isKids && (
+                  <div className="redzone-profile-kids-badge">KIDS</div>
+                )}
               </div>
-              <span
-                style={{
-                  marginTop: 14,
-                  fontSize: 16,
-                  color: "#808080",
-                  fontWeight: 400,
-                  transition: "color 0.2s ease",
-                }}
-              >
-                {profile.name}
-              </span>
+              <span className="redzone-profile-name">{profile.name}</span>
             </div>
           ))}
 
-          {/* Add Profile Tile */}
-          <div
-            onClick={() => setShowAddProfile((prev) => !prev)}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              cursor: "pointer",
-              width: "clamp(100px, 12vw, 140px)",
-              transition: "transform 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              const box = e.currentTarget.querySelector(".profile-box");
-              if (box) box.style.borderColor = "#ffffff";
-              e.currentTarget.style.transform = "scale(1.05)";
-            }}
-            onMouseLeave={(e) => {
-              const box = e.currentTarget.querySelector(".profile-box");
-              if (box) box.style.borderColor = "transparent";
-              e.currentTarget.style.transform = "scale(1)";
-            }}
-          >
+          {/* Add Profile Tile (up to 5 profiles) */}
+          {profiles.length < 5 && (
             <div
-              className="profile-box"
-              style={{
-                width: "100%",
-                aspectRatio: "1/1",
-                borderRadius: 6,
-                backgroundColor: "transparent",
-                border: "2px dashed #808080",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 36,
-                color: "#808080",
-                transition: "all 0.2s ease",
-              }}
+              className="redzone-profile-item redzone-profile-add-item"
+              onClick={handleOpenCreate}
             >
-              +
+              <div className="redzone-profile-avatar-box redzone-profile-add-box">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </div>
+              <span className="redzone-profile-name">Add Profile</span>
             </div>
-            <span
-              style={{
-                marginTop: 14,
-                fontSize: 16,
-                color: "#808080",
-                fontWeight: 400,
-              }}
+          )}
+        </div>
+
+        {/* Action Button: Manage Profiles / Done */}
+        {profiles.length > 0 && (
+          <div className="redzone-profile-actions">
+            <button
+              type="button"
+              className={`redzone-profile-manage-btn ${isManaging ? "active" : ""}`}
+              onClick={() => setIsManaging((prev) => !prev)}
             >
-              Add Profile
-            </span>
+              {isManaging ? "Done" : "Manage Profiles"}
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* Modal: Create or Edit Profile */}
+      {(showCreateModal || editingProfile) && (
+        <div
+          className="redzone-modal-backdrop"
+          onClick={() => {
+            if (profiles.length > 0) {
+              setShowCreateModal(false);
+              setEditingProfile(null);
+            }
+          }}
+        >
+          <div
+            className="redzone-profile-form-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="redzone-form-modal-title">
+              {editingProfile ? "Edit Profile" : "Create Profile"}
+            </h2>
+            <p className="redzone-form-modal-subtitle">
+              Add a personalized profile for another person watching REDZONE.
+            </p>
+
+            <form onSubmit={handleSaveProfile} className="redzone-profile-form">
+              {/* Avatar Preview & Chooser */}
+              <div className="redzone-avatar-section">
+                <div
+                  className="redzone-preview-avatar"
+                  style={{ backgroundColor: formColor }}
+                >
+                  <span className="redzone-preview-avatar-icon">{formAvatar}</span>
+                </div>
+
+                <div className="redzone-avatar-options">
+                  <label className="redzone-field-label">Choose Avatar</label>
+                  <div className="redzone-avatar-picker-grid">
+                    {AVATAR_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.icon}
+                        type="button"
+                        className={`redzone-avatar-option-btn ${formAvatar === opt.icon ? "selected" : ""}`}
+                        onClick={() => setFormAvatar(opt.icon)}
+                        title={opt.label}
+                      >
+                        {opt.icon}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Color Chooser */}
+              <div className="redzone-form-group">
+                <label className="redzone-field-label">Avatar Theme Color</label>
+                <div className="redzone-color-picker-row">
+                  {COLOR_OPTIONS.map((c) => (
+                    <button
+                      key={c.hex}
+                      type="button"
+                      className={`redzone-color-dot ${formColor === c.hex ? "selected" : ""}`}
+                      style={{ backgroundColor: c.hex }}
+                      onClick={() => setFormColor(c.hex)}
+                      title={c.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Profile Name Input */}
+              <div className="redzone-form-group">
+                <label className="redzone-field-label">Profile Name</label>
+                <input
+                  type="text"
+                  className="redzone-input"
+                  placeholder="e.g. Alex"
+                  value={formName}
+                  onChange={(e) => {
+                    setFormName(e.target.value);
+                    if (formError) setFormError("");
+                  }}
+                  autoFocus
+                  maxLength={25}
+                />
+                {formError && <div className="redzone-input-error">{formError}</div>}
+              </div>
+
+              {/* Kids Profile Toggle */}
+              <div className="redzone-kids-toggle-wrap">
+                <label className="redzone-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formIsKids}
+                    onChange={(e) => setFormIsKids(e.target.checked)}
+                    className="redzone-checkbox"
+                  />
+                  <div>
+                    <div className="redzone-checkbox-title">Kid's Profile?</div>
+                    <div className="redzone-checkbox-desc">
+                      Only display TV shows and movies rated for ages 12 and under.
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {/* Buttons */}
+              <div className="redzone-form-buttons">
+                <button type="submit" className="redzone-btn-primary">
+                  {editingProfile ? "Save Changes" : "Create Profile"}
+                </button>
+
+                {profiles.length > 0 && (
+                  <button
+                    type="button"
+                    className="redzone-btn-secondary"
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setEditingProfile(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                )}
+
+                {editingProfile && (
+                  <button
+                    type="button"
+                    className="redzone-btn-danger"
+                    onClick={() => handleDeleteProfile(editingProfile.id)}
+                  >
+                    Delete Profile
+                  </button>
+                )}
+              </div>
+            </form>
           </div>
         </div>
-
-        {/* Add Profile Custom Form */}
-        {showAddProfile && (
-          <form
-            onSubmit={handleCreateCustom}
-            style={{
-              display: "inline-flex",
-              gap: 12,
-              marginBottom: 40,
-              alignItems: "center",
-            }}
-          >
-            <input
-              type="text"
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              placeholder="Name your profile"
-              autoFocus
-              style={{
-                background: "#333",
-                border: "1px solid #555",
-                borderRadius: 4,
-                padding: "10px 16px",
-                color: "#fff",
-                fontSize: 15,
-                outline: "none",
-                width: 220,
-              }}
-            />
-            <button
-              type="submit"
-              style={{
-                background: "#E50914",
-                color: "#fff",
-                border: "none",
-                borderRadius: 4,
-                padding: "10px 20px",
-                fontSize: 15,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              Continue
-            </button>
-          </form>
-        )}
-
-        <div>
-          <button
-            type="button"
-            onClick={() => handleSelectProfile(NETFLIX_PROFILES[0])}
-            style={{
-              background: "transparent",
-              color: "#808080",
-              border: "1px solid #808080",
-              padding: "10px 28px",
-              fontSize: 15,
-              fontWeight: 500,
-              letterSpacing: "1.5px",
-              textTransform: "uppercase",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#ffffff";
-              e.currentTarget.style.borderColor = "#ffffff";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#808080";
-              e.currentTarget.style.borderColor = "#808080";
-            }}
-          >
-            Manage Profiles
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

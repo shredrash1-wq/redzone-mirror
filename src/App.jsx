@@ -53,6 +53,7 @@ import NetflixDetailModal from "./components/NetflixDetailModal";
 import NetflixBrowsePage from "./pages/NetflixBrowsePage";
 import NetflixSearchPage from "./pages/NetflixSearchPage";
 import RedzoneVideoPlayer from "./components/RedzoneVideoPlayer";
+import RedzoneIntroAnimation from "./components/RedzoneIntroAnimation";
 import "./styles/netflix.css";
 
 import {
@@ -61,7 +62,20 @@ import {
 } from "./utils/updates";
 
 export default function App() {
-  const [user, setUser] = useState(() => storage.get("guest_user") || null);
+  // Opening web intro animation like Netflix
+  const [showIntro, setShowIntro] = useState(true);
+
+  // User state: never load pre-created mock accounts; only user-created profiles are valid
+  const [user, setUser] = useState(() => {
+    const existingProfiles = storage.get("redzone_user_profiles");
+    const current = storage.get("guest_user");
+    if (Array.isArray(existingProfiles) && existingProfiles.length > 0 && current) {
+      return current;
+    }
+    // Clear any previous mock user so the user can make their own profile
+    storage.remove("guest_user");
+    return null;
+  });
   // apiKey loaded from storage or immediately defaults to user's pre-configured TMDB token
   const [apiKey, setApiKey] = useState(
     () => storage.get(STORAGE_KEYS.API_KEY) || DEFAULT_TMDB_API_KEY,
@@ -1028,12 +1042,21 @@ export default function App() {
     setUser(null);
   }, []);
 
+  if (showIntro) {
+    return (
+      <RedzoneIntroAnimation
+        onComplete={() => setShowIntro(false)}
+      />
+    );
+  }
+
   if (!user) {
     return (
       <GuestLoginPage
         onLogin={(userData) => {
           storage.set("guest_user", userData);
           setUser(userData);
+          setIsKids(Boolean(userData.isKids));
         }}
       />
     );
