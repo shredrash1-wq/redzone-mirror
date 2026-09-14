@@ -100,80 +100,48 @@ export default function RedzoneVideoPlayer({
   const hideTimerRef = useRef(null);
   const serverMenuRef = useRef(null);
 
-  // Fullscreen trigger function with multi-level browser & CSS fallback
+  // Standard Default Fullscreen
   const toggleFullscreen = useCallback(() => {
-    const isDocFs = Boolean(
-      document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.mozFullScreenElement ||
-      document.msFullscreenElement
-    );
-
-    if (!isDocFs && !isFullscreen) {
-      const el = containerRef.current || document.documentElement;
-      let requested = false;
-      try {
+    try {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        const el = containerRef.current || document.documentElement;
         if (el.requestFullscreen) {
-          el.requestFullscreen()
-            .then(() => setIsFullscreen(true))
-            .catch(() => {
-              if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(() => {});
-              }
-              setIsFullscreen(true);
-            });
-          requested = true;
+          el.requestFullscreen().catch(() => {});
         } else if (el.webkitRequestFullscreen) {
           el.webkitRequestFullscreen();
-          setIsFullscreen(true);
-          requested = true;
-        } else if (el.webkitEnterFullscreen) {
-          el.webkitEnterFullscreen();
-          setIsFullscreen(true);
-          requested = true;
-        } else if (el.mozRequestFullScreen) {
-          el.mozRequestFullScreen();
-          setIsFullscreen(true);
-          requested = true;
-        } else if (el.msRequestFullscreen) {
-          el.msRequestFullscreen();
-          setIsFullscreen(true);
-          requested = true;
         }
-      } catch (err) {
-        setIsFullscreen(true);
-      }
-      if (!requested) {
-        setIsFullscreen(true);
-      }
-    } else {
-      try {
+      } else {
         if (document.exitFullscreen) {
           document.exitFullscreen().catch(() => {});
         } else if (document.webkitExitFullscreen) {
           document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-          document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-          document.msExitFullscreen();
         }
-      } catch (err) {}
-      setIsFullscreen(false);
-    }
-  }, [isFullscreen]);
-
-  // Automatic Default Fullscreen on Player Load & First Interaction
-  useEffect(() => {
-    // 1. Attempt immediate fullscreen
-    try {
-      const el = containerRef.current || document.documentElement;
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
-        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
       }
     } catch (e) {}
+  }, []);
 
-    // 2. Track native fullscreen state
+  // Default Fullscreen on Load & First Interaction
+  useEffect(() => {
+    const triggerDefaultFullscreen = () => {
+      try {
+        const el = containerRef.current || document.documentElement;
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+          else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        }
+      } catch (e) {}
+    };
+
+    triggerDefaultFullscreen();
+
+    const handleFirstGesture = () => {
+      triggerDefaultFullscreen();
+    };
+
+    window.addEventListener("pointerdown", handleFirstGesture, { once: true });
+    window.addEventListener("click", handleFirstGesture, { once: true });
+
+    // Track standard browser fullscreen state
     const handleFullscreenChange = () => {
       const active = Boolean(
         document.fullscreenElement ||
@@ -190,6 +158,8 @@ export default function RedzoneVideoPlayer({
     document.addEventListener("MSFullscreenChange", handleFullscreenChange);
 
     return () => {
+      window.removeEventListener("pointerdown", handleFirstGesture);
+      window.removeEventListener("click", handleFirstGesture);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
       document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
@@ -390,7 +360,7 @@ export default function RedzoneVideoPlayer({
   return (
     <div
       ref={containerRef}
-      className={`redzone-direct-player redzone-liquid-viewport ${isFullscreen ? "redzone-fullscreen-mode" : ""}`}
+      className="redzone-direct-player redzone-liquid-viewport"
       onMouseMove={resetHideTimer}
       onTouchStart={resetHideTimer}
       onClick={() => {
