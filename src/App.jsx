@@ -1042,26 +1042,6 @@ export default function App() {
     setUser(null);
   }, []);
 
-  if (showIntro) {
-    return (
-      <RedzoneIntroAnimation
-        onComplete={() => setShowIntro(false)}
-      />
-    );
-  }
-
-  if (!user) {
-    return (
-      <GuestLoginPage
-        onLogin={(userData) => {
-          storage.set("guest_user", userData);
-          setUser(userData);
-          setIsKids(Boolean(userData.isKids));
-        }}
-      />
-    );
-  }
-
   const effectiveApiKey = apiKey || DEFAULT_TMDB_API_KEY;
   const hasCustomTitlebar = platform === "win32" || platform === "linux";
   const isPlaying =
@@ -1112,8 +1092,32 @@ export default function App() {
     [page, navigate],
   );
 
+  if (!user) {
+    return (
+      <>
+        <GuestLoginPage
+          onLogin={(userData) => {
+            storage.set("guest_user", userData);
+            setUser(userData);
+            setIsKids(Boolean(userData.isKids));
+          }}
+        />
+        {showIntro && (
+          <RedzoneIntroAnimation
+            onComplete={() => setShowIntro(false)}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <ErrorBoundary>
+      {showIntro && (
+        <RedzoneIntroAnimation
+          onComplete={() => setShowIntro(false)}
+        />
+      )}
       {hasCustomTitlebar && <WindowTitlebar />}
 
       {/* Netflix Top Navigation Bar */}
