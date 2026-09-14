@@ -100,51 +100,102 @@ export default function RedzoneVideoPlayer({
   const hideTimerRef = useRef(null);
   const serverMenuRef = useRef(null);
 
-  // Fullscreen trigger function
-  const requestAutoFullscreen = useCallback(() => {
-    try {
+  // Fullscreen trigger function with multi-level browser & CSS fallback
+  const toggleFullscreen = useCallback(() => {
+    const isDocFs = Boolean(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+
+    if (!isDocFs && !isFullscreen) {
       const el = containerRef.current || document.documentElement;
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      let requested = false;
+      try {
         if (el.requestFullscreen) {
-          el.requestFullscreen().catch(() => {});
+          el.requestFullscreen()
+            .then(() => setIsFullscreen(true))
+            .catch(() => {
+              if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+              }
+              setIsFullscreen(true);
+            });
+          requested = true;
         } else if (el.webkitRequestFullscreen) {
           el.webkitRequestFullscreen();
+          setIsFullscreen(true);
+          requested = true;
+        } else if (el.webkitEnterFullscreen) {
+          el.webkitEnterFullscreen();
+          setIsFullscreen(true);
+          requested = true;
+        } else if (el.mozRequestFullScreen) {
+          el.mozRequestFullScreen();
+          setIsFullscreen(true);
+          requested = true;
+        } else if (el.msRequestFullscreen) {
+          el.msRequestFullscreen();
+          setIsFullscreen(true);
+          requested = true;
         }
+      } catch (err) {
+        setIsFullscreen(true);
       }
-    } catch (err) {}
-  }, []);
+      if (!requested) {
+        setIsFullscreen(true);
+      }
+    } else {
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      } catch (err) {}
+      setIsFullscreen(false);
+    }
+  }, [isFullscreen]);
 
   // Automatic Default Fullscreen on Player Load & First Interaction
   useEffect(() => {
     // 1. Attempt immediate fullscreen
-    requestAutoFullscreen();
+    try {
+      const el = containerRef.current || document.documentElement;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      }
+    } catch (e) {}
 
-    // 2. Browser policy requires user gesture; trigger auto-fullscreen on first tap/click
-    const handleFirstGesture = () => {
-      requestAutoFullscreen();
-    };
-
-    window.addEventListener("pointerdown", handleFirstGesture, { once: true });
-    window.addEventListener("touchstart", handleFirstGesture, { once: true, passive: true });
-    window.addEventListener("click", handleFirstGesture, { once: true });
-
-    // 3. Track native fullscreen state
+    // 2. Track native fullscreen state
     const handleFullscreenChange = () => {
-      const active = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      const active = Boolean(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
       setIsFullscreen(active);
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
 
     return () => {
-      window.removeEventListener("pointerdown", handleFirstGesture);
-      window.removeEventListener("touchstart", handleFirstGesture);
-      window.removeEventListener("click", handleFirstGesture);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
     };
-  }, [requestAutoFullscreen]);
+  }, []);
 
   // Fetch full TV details for season counts
   useEffect(() => {
@@ -256,25 +307,6 @@ export default function RedzoneVideoPlayer({
     };
   }, []);
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      const el = containerRef.current || document.documentElement;
-      if (el.requestFullscreen) {
-        el.requestFullscreen().catch(() => {});
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
-      }
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      }
-      setIsFullscreen(false);
-    }
-  };
-
   // Mobile Screen Orientation lock/toggle
   const toggleOrientation = async () => {
     try {
@@ -358,7 +390,7 @@ export default function RedzoneVideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="redzone-direct-player redzone-liquid-viewport"
+      className={`redzone-direct-player redzone-liquid-viewport ${isFullscreen ? "redzone-fullscreen-mode" : ""}`}
       onMouseMove={resetHideTimer}
       onTouchStart={resetHideTimer}
       onClick={() => {
@@ -385,8 +417,10 @@ export default function RedzoneVideoPlayer({
           title={title}
           className="redzone-player-iframe redzone-player-iframe--fluid"
           referrerPolicy="no-referrer"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-          allowFullScreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen *"
+          allowFullScreen={true}
+          webkitallowfullscreen="true"
+          mozallowfullscreen="true"
           onLoad={() => setIframeLoading(false)}
         />
       </div>
@@ -587,25 +621,15 @@ export default function RedzoneVideoPlayer({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="redzone-player-bottombar-left">
-          {/* Quick Server Switcher Horizontal Scroll Pills */}
-          <div className="redzone-quick-servers">
-            <span className="redzone-quick-label">Servers:</span>
-            <div className="redzone-quick-servers-scroll">
-              {STREAMING_SERVERS.map((srv) => (
-                <button
-                  key={srv.id}
-                  type="button"
-                  className={`redzone-quick-srv-btn redzone-liquid-glass-pill ${srv.id === serverId ? "active" : ""}`}
-                  onClick={() => {
-                    setServerId(srv.id);
-                    storage.set("redzone_preferred_server", srv.id);
-                    setIframeLoading(true);
-                  }}
-                  title={srv.label}
-                >
-                  {srv.name}
-                </button>
-              ))}
+          {/* Quality & Stream Specs Indicator */}
+          <div className="redzone-bottom-quality-group">
+            <span className="redzone-quality-pill redzone-liquid-badge">
+              {currentServer.quality}
+            </span>
+            <div className="redzone-bottom-specs-text">
+              <span className="redzone-bottom-server-title">{currentServer.name}</span>
+              <span className="redzone-bottom-specs-dot">•</span>
+              <span className="redzone-bottom-tag-label">{currentServer.tag}</span>
             </div>
           </div>
         </div>
@@ -656,6 +680,31 @@ export default function RedzoneVideoPlayer({
               <line x1="10" y1="14" x2="21" y2="3" />
             </svg>
             <span>Popout</span>
+          </button>
+
+          {/* Fullscreen Button in Bottom Bar */}
+          <button
+            type="button"
+            className={`redzone-player-skip-btn redzone-player-fullscreen-btn redzone-liquid-glass-btn ${isFullscreen ? "active" : ""}`}
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen Mode (F)"}
+            aria-label="Fullscreen"
+          >
+            {isFullscreen ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+                </svg>
+                <span>Exit Fullscreen</span>
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                </svg>
+                <span>Fullscreen</span>
+              </>
+            )}
           </button>
         </div>
       </footer>
