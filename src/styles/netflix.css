@@ -1748,11 +1748,12 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 280px;
+  width: 290px;
+  max-width: calc(100vw - 24px);
   background: rgba(20, 20, 20, 0.98);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 8px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85);
   display: flex;
@@ -1772,6 +1773,15 @@ body {
   margin-bottom: 4px;
 }
 
+.redzone-server-menu-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 60vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .redzone-server-menu-item {
   display: flex;
   align-items: center;
@@ -1779,13 +1789,14 @@ body {
   background: transparent;
   border: none;
   color: #e5e5e5;
-  padding: 8px 12px;
-  border-radius: 4px;
+  padding: 9px 12px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   text-align: left;
   transition: all 0.15s ease;
+  min-height: 44px;
 }
 
 .redzone-server-menu-item:hover {
@@ -1848,34 +1859,60 @@ body {
 .redzone-player-bottombar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .redzone-quick-servers {
   display: flex;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.redzone-quick-servers-scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 0;
+}
+
+.redzone-quick-servers-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .redzone-quick-label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #8c8c8c;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-right: 4px;
+  margin-right: 2px;
+  flex-shrink: 0;
 }
 
 .redzone-quick-srv-btn {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #d1d1d1;
-  padding: 5px 10px;
+  padding: 6px 11px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s ease;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .redzone-quick-srv-btn:hover {
@@ -1892,7 +1929,8 @@ body {
 .redzone-player-bottombar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .redzone-player-skip-btn {
@@ -2230,8 +2268,19 @@ body {
 
   /* Player topbar on phone */
   .redzone-player-topbar {
-    height: 60px;
-    padding: 0 14px;
+    height: 54px;
+    padding: 0 10px;
+    gap: 6px;
+  }
+
+  .redzone-player-topbar-left {
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .redzone-player-back-action {
+    padding: 6px 8px;
   }
 
   .redzone-player-back-text {
@@ -2239,25 +2288,118 @@ body {
   }
 
   .redzone-player-title-line {
-    font-size: 14px;
+    font-size: 13.5px;
+    gap: 6px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .redzone-player-title {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .redzone-player-year {
+    display: none;
+  }
+
+  .redzone-quality-badge {
+    font-size: 9.5px;
+    padding: 1px 4px;
   }
 
   .redzone-player-subtitle {
-    font-size: 11px;
+    font-size: 10.5px;
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .redzone-player-topbar-right {
+    gap: 4px;
+  }
+
+  .redzone-player-control-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .redzone-server-current-label {
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11.5px;
   }
 
   .redzone-control-label {
     display: none;
   }
 
-  .redzone-player-next-ep-wrap {
-    bottom: 18px;
-    right: 18px;
+  .redzone-player-bottombar {
+    height: 52px;
+    padding: 0 10px;
+    gap: 6px;
   }
 
-  .redzone-player-next-ep-btn {
-    padding: 10px 16px;
+  .redzone-quick-label {
+    display: none;
+  }
+
+  .redzone-quick-srv-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+    min-height: 32px;
+  }
+
+  .redzone-player-skip-btn {
+    padding: 6px 9px;
+    font-size: 11.5px;
+    gap: 4px;
+  }
+
+  .redzone-episodes-drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .redzone-drawer-header {
+    padding: 14px 16px;
+  }
+
+  .redzone-drawer-title {
+    font-size: 17px;
+  }
+
+  .redzone-drawer-season-select {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .redzone-drawer-list {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .redzone-drawer-ep-thumb-wrap {
+    width: 90px;
+  }
+
+  .redzone-drawer-ep-num {
     font-size: 13px;
+  }
+
+  .redzone-drawer-ep-desc {
+    font-size: 11px;
+  }
+
+  .redzone-server-dropdown-menu {
+    width: min(300px, calc(100vw - 20px));
+    right: -4px;
   }
 }
 

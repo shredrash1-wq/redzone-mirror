@@ -8,7 +8,7 @@ const STREAMING_SERVERS = [
     name: "Server 1",
     label: "Server 1 (Videasy - 1080p HD)",
     quality: "1080p HD",
-    tag: "Ad-Free / Fast",
+    tag: "Fast / Ultra HD",
     getMovieUrl: (id) => `https://player.videasy.to/movie/${id}?color=e50914`,
     getTvUrl: (id, s, e) => `https://player.videasy.to/tv/${id}/${s}/${e}?color=e50914`,
   },
@@ -161,7 +161,7 @@ export default function RedzoneVideoPlayer({
       if (!showServerMenu && !showEpisodesDrawer) {
         setShowControls(false);
       }
-    }, 4000);
+    }, 4500);
   }, [showServerMenu, showEpisodesDrawer]);
 
   useEffect(() => {
@@ -202,7 +202,11 @@ export default function RedzoneVideoPlayer({
       }
     };
     window.addEventListener("mousedown", handleClickOutside);
-    return () => window.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      window.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   const toggleFullscreen = () => {
@@ -286,17 +290,17 @@ export default function RedzoneVideoPlayer({
         if (!showControls) setShowControls(true);
       }}
     >
-      {/* Invisible Hover Zones to bring controls up smoothly */}
-      <div className="redzone-player-hover-strip redzone-player-hover-strip--top" onMouseEnter={() => setShowControls(true)} />
-      <div className="redzone-player-hover-strip redzone-player-hover-strip--bottom" onMouseEnter={() => setShowControls(true)} />
+      {/* Invisible Hover & Touch Activation Zones */}
+      <div className="redzone-player-hover-strip redzone-player-hover-strip--top" onMouseEnter={() => setShowControls(true)} onClick={() => setShowControls(true)} />
+      <div className="redzone-player-hover-strip redzone-player-hover-strip--bottom" onMouseEnter={() => setShowControls(true)} onClick={() => setShowControls(true)} />
 
-      {/* Central Video Stream (iframe) with Anti-Popup & Anti-Redirect Sandboxing */}
+      {/* Central Video Stream (iframe) - No sandbox attribute so all streams play seamlessly */}
       <div className="redzone-player-stage">
         {iframeLoading && (
           <div className="redzone-player-spinner">
             <div className="redzone-spinner-ring" />
-            <div className="redzone-spinner-text">Connecting to {currentServer.label}…</div>
-            <div className="redzone-spinner-subtext">No Ads • {currentServer.quality}</div>
+            <div className="redzone-spinner-text">Connecting to {currentServer.name}…</div>
+            <div className="redzone-spinner-subtext">{currentServer.quality} • Fast Stream</div>
           </div>
         )}
 
@@ -306,15 +310,13 @@ export default function RedzoneVideoPlayer({
           title={title}
           className="redzone-player-iframe"
           referrerPolicy="no-referrer"
-          /* Sandbox blocks popups, new window opening, top navigation redirects */
-          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
           allowFullScreen
           onLoad={() => setIframeLoading(false)}
         />
       </div>
 
-      {/* Persistent Floating Controls Button (Always accessible even during playback) */}
+      {/* Persistent Floating Controls Button (Quickly reveal controls on phones or desktop) */}
       <button
         type="button"
         className={`redzone-player-floating-trigger ${showControls ? "hidden" : ""}`}
@@ -332,7 +334,7 @@ export default function RedzoneVideoPlayer({
         <span>Controls</span>
       </button>
 
-      {/* Top Floating Control Bar */}
+      {/* Top Floating Control Bar - Fully Responsive for Mobile & Desktop */}
       <header
         className={`redzone-player-topbar ${showControls ? "redzone-player-topbar--visible" : ""}`}
         onClick={(e) => e.stopPropagation()}
@@ -355,13 +357,13 @@ export default function RedzoneVideoPlayer({
           {/* Title and metadata */}
           <div className="redzone-player-meta">
             <div className="redzone-player-title-line">
-              <span className="redzone-player-title">{title}</span>
+              <span className="redzone-player-title" title={title}>{title}</span>
               {year && <span className="redzone-player-year">({year})</span>}
               <span className="redzone-quality-badge">{currentServer.quality}</span>
             </div>
             {isTV && (
               <div className="redzone-player-subtitle">
-                Season {season} • Episode {episode}
+                Season {season} • Ep {episode}
                 {currentEpisodeObj?.name ? `: ${currentEpisodeObj.name}` : ""}
               </div>
             )}
@@ -393,26 +395,28 @@ export default function RedzoneVideoPlayer({
 
             {showServerMenu && (
               <div className="redzone-server-dropdown-menu">
-                <div className="redzone-server-menu-title">Select Playback Server & Quality</div>
-                {STREAMING_SERVERS.map((srv) => (
-                  <button
-                    key={srv.id}
-                    type="button"
-                    className={`redzone-server-menu-item ${srv.id === serverId ? "active" : ""}`}
-                    onClick={() => {
-                      setServerId(srv.id);
-                      storage.set("redzone_preferred_server", srv.id);
-                      setShowServerMenu(false);
-                      setIframeLoading(true);
-                    }}
-                  >
-                    <div className="redzone-server-item-left">
-                      <span className="redzone-server-item-label">{srv.label}</span>
-                      <span className="redzone-server-item-tag">{srv.tag}</span>
-                    </div>
-                    {srv.id === serverId && <span className="redzone-server-active-check">✓</span>}
-                  </button>
-                ))}
+                <div className="redzone-server-menu-title">Select Server & Quality</div>
+                <div className="redzone-server-menu-scroll">
+                  {STREAMING_SERVERS.map((srv) => (
+                    <button
+                      key={srv.id}
+                      type="button"
+                      className={`redzone-server-menu-item ${srv.id === serverId ? "active" : ""}`}
+                      onClick={() => {
+                        setServerId(srv.id);
+                        storage.set("redzone_preferred_server", srv.id);
+                        setShowServerMenu(false);
+                        setIframeLoading(true);
+                      }}
+                    >
+                      <div className="redzone-server-item-left">
+                        <span className="redzone-server-item-label">{srv.label}</span>
+                        <span className="redzone-server-item-tag">{srv.tag}</span>
+                      </div>
+                      {srv.id === serverId && <span className="redzone-server-active-check">✓</span>}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -423,6 +427,7 @@ export default function RedzoneVideoPlayer({
             className="redzone-player-control-btn redzone-player-control-btn--icon"
             onClick={handleRefreshStream}
             title="Reload Video Stream"
+            aria-label="Reload stream"
           >
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10" />
@@ -438,6 +443,7 @@ export default function RedzoneVideoPlayer({
               className={`redzone-player-control-btn ${showEpisodesDrawer ? "active" : ""}`}
               onClick={() => setShowEpisodesDrawer((prev) => !prev)}
               title="Episodes"
+              aria-label="Episodes list"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="8" y1="6" x2="21" y2="6" />
@@ -457,6 +463,7 @@ export default function RedzoneVideoPlayer({
             className="redzone-player-control-btn redzone-player-control-btn--icon"
             onClick={toggleFullscreen}
             title={isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
+            aria-label="Toggle Fullscreen"
           >
             {isFullscreen ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -475,6 +482,7 @@ export default function RedzoneVideoPlayer({
             className="redzone-player-control-btn redzone-player-control-btn--icon redzone-player-close-btn"
             onClick={onClose}
             title="Close (Esc)"
+            aria-label="Close player"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -490,24 +498,26 @@ export default function RedzoneVideoPlayer({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="redzone-player-bottombar-left">
-          {/* Quick Server Switcher Pills */}
+          {/* Quick Server Switcher Horizontal Scroll Pills */}
           <div className="redzone-quick-servers">
             <span className="redzone-quick-label">Servers:</span>
-            {STREAMING_SERVERS.slice(0, 5).map((srv) => (
-              <button
-                key={srv.id}
-                type="button"
-                className={`redzone-quick-srv-btn ${srv.id === serverId ? "active" : ""}`}
-                onClick={() => {
-                  setServerId(srv.id);
-                  storage.set("redzone_preferred_server", srv.id);
-                  setIframeLoading(true);
-                }}
-                title={srv.label}
-              >
-                {srv.name}
-              </button>
-            ))}
+            <div className="redzone-quick-servers-scroll">
+              {STREAMING_SERVERS.map((srv) => (
+                <button
+                  key={srv.id}
+                  type="button"
+                  className={`redzone-quick-srv-btn ${srv.id === serverId ? "active" : ""}`}
+                  onClick={() => {
+                    setServerId(srv.id);
+                    storage.set("redzone_preferred_server", srv.id);
+                    setIframeLoading(true);
+                  }}
+                  title={srv.label}
+                >
+                  {srv.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -520,7 +530,7 @@ export default function RedzoneVideoPlayer({
               onClick={handlePrevEpisode}
               title="Previous Episode"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
                 <line x1="5" y1="5" x2="5" y2="19" stroke="currentColor" strokeWidth="3" />
                 <polygon points="19 20 9 12 19 4 19 20" />
               </svg>
@@ -537,7 +547,7 @@ export default function RedzoneVideoPlayer({
               title="Next Episode"
             >
               <span>Next Ep</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 4 15 12 5 20 5 4" />
                 <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" strokeWidth="3" />
               </svg>
@@ -581,7 +591,7 @@ export default function RedzoneVideoPlayer({
                 >
                   {seasons.map((s) => (
                     <option key={s.id} value={s.season_number}>
-                      {s.name} ({s.episode_count} Episodes)
+                      {s.name} ({s.episode_count} Ep)
                     </option>
                   ))}
                 </select>
@@ -591,6 +601,7 @@ export default function RedzoneVideoPlayer({
               type="button"
               className="redzone-drawer-close"
               onClick={() => setShowEpisodesDrawer(false)}
+              aria-label="Close episodes drawer"
             >
               ✕
             </button>
