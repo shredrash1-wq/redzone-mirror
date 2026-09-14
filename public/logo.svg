@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="redzoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff2b54" />
+      <stop offset="50%" stop-color="#ff0f3b" />
+      <stop offset="100%" stop-color="#a6001e" />
+    </linearGradient>
+    <linearGradient id="mirrorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35" />
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0.03" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="darkPlate" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181c26" />
+      <stop offset="100%" stop-color="#090b10" />
+    </linearGradient>
+    <linearGradient id="neonRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff4770" />
+      <stop offset="50%" stop-color="#ff0f3b" />
+      <stop offset="100%" stop-color="#ff7b98" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="subtleGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Shield / Hexagon Plate -->
+  <polygon points="256,24 456,128 456,384 256,488 56,384 56,128" fill="url(#darkPlate)" stroke="url(#neonRim)" stroke-width="8" />
+  
+  <!-- Outer Cyber Accent Lines -->
+  <polygon points="256,44 436,138 436,374 256,468 76,374 76,138" fill="none" stroke="#ff0f3b" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="8 6" />
+
+  <!-- Mirror Facet Reflection Overlay (Top half) -->
+  <polygon points="256,44 436,138 380,256 132,256 76,138" fill="url(#mirrorGrad)" />
+
+  <!-- Central Redzone "R" & Mirror Portal Geometry -->
+  <g filter="url(#glow)">
+    <!-- Primary Bold R Left Pillar -->
+    <path d="M 168 140 L 224 140 L 224 372 L 168 372 Z" fill="url(#redzoneGrad)" />
+
+    <!-- R Upper Loop -->
+    <path d="M 224 140 L 310 140 C 354 140, 376 164, 376 204 C 376 244, 350 264, 304 266 L 224 266 Z" fill="url(#redzoneGrad)" />
+    <!-- Inner cutout for upper loop -->
+    <path d="M 224 186 L 296 186 C 318 186, 326 194, 326 204 C 326 216, 316 222, 294 222 L 224 222 Z" fill="#0c0e14" />
+
+    <!-- R Diagonal Dynamic Leg with Cyber Angle -->
+    <polygon points="256,252 320,252 384,372 320,372" fill="url(#redzoneGrad)" />
+
+    <!-- Mirror Flare Wedge (Light reflection shard on the leg) -->
+    <polygon points="278,252 312,252 352,328 336,328" fill="#ffffff" fill-opacity="0.4" />
+  </g>
+
+  <!-- High-tech Center Neon Reticle Accents -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#ff1f46" stroke-width="1.5" stroke-opacity="0.3" stroke-dasharray="24 12 6 12" />
+  <line x1="256" y1="20" x2="256" y2="44" stroke="#ff2b54" stroke-width="4" stroke-linecap="round" />
+  <line x1="256" y1="468" x2="256" y2="492" stroke="#ff2b54" stroke-width="4" stroke-linecap="round" />
+  <line x1="50" y1="256" x2="74" y2="256" stroke="#ff2b54" stroke-width="4" stroke-linecap="round" />
+  <line x1="438" y1="256" x2="462" y2="256" stroke="#ff2b54" stroke-width="4" stroke-linecap="round" />
+
+  <!-- Bottom Tech Inscription "REDZONE" -->
+  <text x="256" y="432" font-family="'Segoe UI', Roboto, 'Arial Black', sans-serif" font-weight="900" font-size="28" letter-spacing="8" fill="#ffffff" text-anchor="middle" opacity="0.95">REDZONE</text>
+  <text x="256" y="452" font-family="'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="14" letter-spacing="12" fill="#ff2b54" text-anchor="middle" opacity="0.9">MIRROR</text>
+</svg>
