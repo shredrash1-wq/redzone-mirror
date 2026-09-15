@@ -4,7 +4,25 @@
  * on Google Chrome, Brave, Safari, Edge, and Android WebView without requiring third-party extensions.
  */
 
+import { storage, STORAGE_KEYS } from "./storage";
+
 let initialized = false;
+
+export function isAdBlockerEnabled() {
+  if (typeof window === "undefined") return true;
+  const val = storage.get(STORAGE_KEYS.ADBLOCK_ENABLED);
+  return val === null || val === undefined ? true : !!val;
+}
+
+export function setAdBlockerEnabled(enabled) {
+  if (typeof window === "undefined") return;
+  storage.set(STORAGE_KEYS.ADBLOCK_ENABLED, !!enabled);
+  window.dispatchEvent(
+    new CustomEvent("streambert-adblock-toggle", {
+      detail: { enabled: !!enabled },
+    })
+  );
+}
 
 // Comprehensive blocklist of rogue ad networks, popunder triggers, and tracking domains
 const BLOCKED_DOMAINS = [
@@ -117,6 +135,9 @@ export function initAdBlocker() {
     // 1. Strict window.open Interception
     // Completely neutralizes popunders, rogue tabs, and redirect cascades
     window.open = function (url, target, features) {
+      if (!isAdBlockerEnabled()) {
+        return originalOpen.call(window, url, target, features);
+      }
       if (!url) {
         notifyBlocked("blank-popup");
         return null;
@@ -148,6 +169,9 @@ export function initAdBlocker() {
     if (typeof window.fetch === "function") {
       const originalFetch = window.fetch;
       window.fetch = async function (input, init) {
+        if (!isAdBlockerEnabled()) {
+          return originalFetch.apply(this, arguments);
+        }
         const url = typeof input === "string" ? input : input?.url || "";
         if (isUrlBlocked(url)) {
           notifyBlocked(url);
@@ -164,6 +188,9 @@ export function initAdBlocker() {
     if (typeof window.XMLHttpRequest === "function") {
       const originalXhrOpen = XMLHttpRequest.prototype.open;
       XMLHttpRequest.prototype.open = function (method, url) {
+        if (!isAdBlockerEnabled()) {
+          return originalXhrOpen.apply(this, arguments);
+        }
         if (isUrlBlocked(url)) {
           notifyBlocked(String(url));
           // Neutralize with noop
@@ -178,6 +205,7 @@ export function initAdBlocker() {
     document.addEventListener(
       "click",
       (e) => {
+        if (!isAdBlockerEnabled()) return;
         const target = e.target?.closest?.("a");
         if (target && target.href) {
           const href = target.href.toLowerCase();
@@ -195,6 +223,7 @@ export function initAdBlocker() {
 
     // 5. Clean rogue dynamically inserted ad scripts & overlay elements
     const observer = new MutationObserver((mutations) => {
+      if (!isAdBlockerEnabled()) return;
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (!node || node.nodeType !== 1) continue;

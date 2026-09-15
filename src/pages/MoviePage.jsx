@@ -1107,7 +1107,6 @@ export default function MoviePage({
                       )
                 }
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-encrypted-media"
                 referrerPolicy="no-referrer"
                 allowFullScreen
                 onLoad={() => setWebviewLoading(false)}

@@ -70,6 +70,8 @@ export const STORAGE_KEYS = {
   REDUCE_ANIMATIONS: "reduceAnimations",
   LIBRARY_SORT: "librarySort",
   HISTORY_ENABLED: "historyEnabled",
+  // Built-in AdBlocker / AdShield Pro toggle
+  ADBLOCK_ENABLED: "adblockEnabled",
   // Notification preferences
   NOTIFY_DOWNLOAD_COMPLETE: "notifyDownloadComplete",
   NOTIFY_NEW_EPISODE: "notifyNewEpisode",

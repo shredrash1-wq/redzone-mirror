@@ -32,6 +32,7 @@ import {
 } from "../utils/homeLayout";
 import { collectBackupData, restoreBackupData } from "../utils/backup";
 import { formatBytes } from "../utils/storage";
+import { isAdBlockerEnabled, setAdBlockerEnabled } from "../utils/adBlocker";
 
 // ── Custom Select ─────────────────────────────────────────────────────────────
 function SettingsSelect({ value, onChange, options, style }) {
@@ -1700,11 +1701,20 @@ function LibraryPrivacySection() {
     const v = storage.get(STORAGE_KEYS.HISTORY_ENABLED);
     return v === 0 || v === false ? false : true;
   });
+  const [adblockEnabled, setAdblockEnabledState] = useState(() =>
+    isAdBlockerEnabled(),
+  );
   const [saved, setSaved] = useState(false);
+
+  const handleAdBlockToggle = (val) => {
+    setAdblockEnabledState(val);
+    setAdBlockerEnabled(val);
+  };
 
   const handleSave = () => {
     storage.set(STORAGE_KEYS.LIBRARY_SORT, sort);
     storage.set(STORAGE_KEYS.HISTORY_ENABLED, historyEnabled ? 1 : 0);
+    setAdBlockerEnabled(adblockEnabled);
     window.dispatchEvent(
       new CustomEvent("streambert:library-sort-changed", { detail: sort }),
     );
@@ -1722,6 +1732,38 @@ function LibraryPrivacySection() {
   return (
     <div style={{ marginBottom: 40 }}>
       <div className="settings-section-title">Library & Privacy</div>
+
+      {/* Built-in Ad Blocker & Pop-up Shield */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Toggle value={adblockEnabled} onChange={handleAdBlockToggle} />
+          <div>
+            <div
+              style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}
+            >
+              Built-in Ad Blocker & Pop-up Shield
+            </div>
+            <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 2 }}>
+              Automatically blocks popups, redirect cascades, click-hijackers, and known ad networks on Google Chrome, Brave, Safari, Edge, and Android without requiring third-party extensions.
+            </div>
+          </div>
+        </div>
+        {!adblockEnabled && (
+          <div
+            style={{
+              marginTop: 12,
+              fontSize: 13,
+              color: "var(--text3)",
+              background: "var(--surface2)",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              padding: "10px 14px",
+            }}
+          >
+            ℹ️ Ad Blocker is turned off. Video player sources may open ad popups or redirect tabs.
+          </div>
+        )}
+      </div>
 
       {/* Watchlist Sort */}
       <div style={{ marginBottom: 24 }}>
