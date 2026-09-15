@@ -818,8 +818,22 @@ export default function App() {
   const handlePlayItem = useCallback(
     (item, episodeInfo = null) => {
       setDetailItem(null);
+      const isTV = item?.media_type === "tv" || (!item?.release_date && Boolean(item?.name));
+      const s = episodeInfo?.season || item?.season || 1;
+      const ep = episodeInfo?.episode || item?.episode || 1;
+      const pk = isTV ? `tv_${item?.id}_s${s}e${ep}` : `movie_${item?.id}`;
+      const positions = storage.get("playback_positions") || {};
+      const savedPos = positions[pk];
+      const initialTime = episodeInfo?.currentTime || savedPos?.currentTime || 0;
+
       // Play directly in-place without redirecting to another page
-      setDirectPlayerItem({ ...item, ...(episodeInfo || {}) });
+      setDirectPlayerItem({
+        ...item,
+        season: s,
+        episode: ep,
+        currentTime: initialTime,
+        ...(episodeInfo || {}),
+      });
     },
     [],
   );
@@ -993,15 +1007,15 @@ export default function App() {
   );
 
   // Filter by progress/watched
-  const inProgress = useMemo(
-    () =>
-      historyWithKeys.filter((h) => {
-        if (watched[h._pk]) return false;
-        const pct = progress[h._pk];
-        return pct != null && pct > 2 && pct < 98;
-      }),
-    [historyWithKeys, progress, watched],
-  );
+  const inProgress = useMemo(() => {
+    const positions = storage.get("playback_positions") || {};
+    return historyWithKeys.filter((h) => {
+      if (watched[h._pk]) return false;
+      const pct = progress[h._pk] ?? positions[h._pk]?.pct ?? h.progress;
+      if (pct != null && pct >= 95) return false;
+      return pct != null ? pct >= 1 : true;
+    });
+  }, [historyWithKeys, progress, watched]);
 
   // Memoized, avoids re-mapping on every download-progress event
   const savedList = useMemo(() => {
@@ -1363,8 +1377,10 @@ export default function App() {
           apiKey={effectiveApiKey}
           initialSeason={directPlayerItem.season || 1}
           initialEpisode={directPlayerItem.episode || 1}
+          initialTime={directPlayerItem.currentTime || 0}
           onClose={() => setDirectPlayerItem(null)}
           onRecordHistory={addHistory}
+          onSaveProgress={saveProgress}
         />
       )}
 

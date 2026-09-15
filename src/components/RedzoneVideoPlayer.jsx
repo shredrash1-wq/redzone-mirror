@@ -68,13 +68,27 @@ const STREAMING_SERVERS = [
   },
 ];
 
+function formatTime(seconds) {
+  if (!seconds || isNaN(seconds) || seconds < 0) return "00:00";
+  const s = Math.floor(seconds);
+  const hrs = Math.floor(s / 3600);
+  const mins = Math.floor((s % 3600) / 60);
+  const secs = s % 60;
+  if (hrs > 0) {
+    return `${hrs}:${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  }
+  return `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
+}
+
 export default function RedzoneVideoPlayer({
   item,
   apiKey,
   initialSeason = 1,
   initialEpisode = 1,
+  initialTime = 0,
   onClose,
   onRecordHistory,
+  onSaveProgress,
 }) {
   const isTV = item?.media_type === "tv" || (!item?.release_date && Boolean(item?.name));
   const mediaType = isTV ? "tv" : "movie";
@@ -98,10 +112,200 @@ export default function RedzoneVideoPlayer({
   const [isLandscapeLocked, setIsLandscapeLocked] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
+  // ── Playback Progress & Exact Minute/Second Tracking ──
+  const progressKey = useMemo(() => {
+    return isTV ? `tv_${itemId}_s${season}e${episode}` : `movie_${itemId}`;
+  }, [isTV, itemId, season, episode]);
+
+  const defaultDuration = useMemo(() => {
+    if (isTV) {
+      return 45 * 60; // 45m default for TV episode
+    }
+    return (item?.runtime ? item.runtime * 60 : 110 * 60); // Default 110m for movie
+  }, [isTV, item]);
+
+  const [duration, setDuration] = useState(defaultDuration);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [resumeToast, setResumeToast] = useState(null); // { time: number }
+  const [startOffset, setStartOffset] = useState(0);
+
+  const currentTimeRef = useRef(0);
+  const durationRef = useRef(defaultDuration);
+  const itemRef = useRef(item);
+  itemRef.current = item;
+
   const containerRef = useRef(null);
   const iframeRef = useRef(null);
   const hideTimerRef = useRef(null);
   const serverMenuRef = useRef(null);
+  const toastTimerRef = useRef(null);
+
+  // Read saved progress on mount or episode change
+  useEffect(() => {
+    if (!itemId) return;
+    const allPositions = storage.get("playback_positions") || {};
+    const pos = allPositions[progressKey];
+    let initialSec = 0;
+
+    if (pos && typeof pos.currentTime === "number" && pos.currentTime > 5) {
+      initialSec = pos.currentTime;
+      if (pos.duration) {
+        setDuration(pos.duration);
+        durationRef.current = pos.duration;
+      }
+    } else {
+      const allProgress = storage.get("progress") || {};
+      const savedPct = allProgress[progressKey];
+      if (savedPct && savedPct > 1 && savedPct < 95) {
+        initialSec = Math.round((savedPct / 100) * defaultDuration);
+      } else if (initialTime > 5) {
+        initialSec = initialTime;
+      }
+    }
+
+    if (initialSec > 10) {
+      setCurrentTime(initialSec);
+      currentTimeRef.current = initialSec;
+      setStartOffset(initialSec);
+      setResumeToast({ time: initialSec });
+
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = setTimeout(() => {
+        setResumeToast(null);
+      }, 7000);
+    } else {
+      setCurrentTime(0);
+      currentTimeRef.current = 0;
+      setStartOffset(0);
+      setResumeToast(null);
+    }
+
+    return () => clearTimeout(toastTimerRef.current);
+  }, [progressKey, itemId, defaultDuration, initialTime]);
+
+  // Flush and persist current playback position
+  const flushProgress = useCallback((explicitTime = null) => {
+    if (!itemId) return;
+    const timeToSave = explicitTime !== null ? explicitTime : currentTimeRef.current;
+    const durToSave = durationRef.current || defaultDuration;
+    if (durToSave <= 0) return;
+
+    const pct = Math.min(100, Math.max(1, Math.round((timeToSave / durToSave) * 100)));
+
+    // 1. Save detailed position object
+    const allPositions = storage.get("playback_positions") || {};
+    allPositions[progressKey] = {
+      id: itemId,
+      media_type: isTV ? "tv" : "movie",
+      season: isTV ? season : undefined,
+      episode: isTV ? episode : undefined,
+      title: itemRef.current?.title || itemRef.current?.name,
+      poster_path: itemRef.current?.poster_path,
+      backdrop_path: itemRef.current?.backdrop_path,
+      currentTime: timeToSave,
+      duration: durToSave,
+      pct,
+      updatedAt: Date.now(),
+    };
+    storage.set("playback_positions", allPositions);
+
+    // 2. Save quick progress map percentage
+    const allProgress = storage.get("progress") || {};
+    allProgress[progressKey] = pct;
+    storage.set("progress", allProgress);
+    onSaveProgress?.(progressKey, pct);
+
+    // 3. Save to watch history
+    if (onRecordHistory && itemRef.current) {
+      onRecordHistory({
+        ...itemRef.current,
+        season: isTV ? season : undefined,
+        episode: isTV ? episode : undefined,
+        media_type: isTV ? "tv" : "movie",
+        watchedAt: Date.now(),
+        progress: pct,
+        currentTime: timeToSave,
+        duration: durToSave,
+      });
+    }
+  }, [itemId, defaultDuration, progressKey, isTV, season, episode, onSaveProgress, onRecordHistory]);
+
+  // Active playback ticker (ticks every second when window active & tab visible)
+  useEffect(() => {
+    let tickCount = 0;
+    const interval = setInterval(() => {
+      if (document.hidden) return;
+      currentTimeRef.current += 1;
+      setCurrentTime(currentTimeRef.current);
+      tickCount += 1;
+
+      // Save to storage every 3 seconds
+      if (tickCount % 3 === 0) {
+        flushProgress();
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      flushProgress();
+    };
+  }, [flushProgress]);
+
+  // Listen to postMessage from embedded players (Vidlink, Videasy, PlayerJS, etc.)
+  useEffect(() => {
+    const handlePlayerMessage = (e) => {
+      try {
+        const raw = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+        if (!raw) return;
+
+        const time =
+          raw.currentTime ??
+          raw.time ??
+          raw.data?.currentTime ??
+          raw.data?.time ??
+          (raw.event === "timeupdate" ? raw.currentTime : null);
+
+        const dur =
+          raw.duration ??
+          raw.data?.duration ??
+          (raw.event === "timeupdate" ? raw.duration : null);
+
+        if (typeof time === "number" && !isNaN(time) && time >= 0) {
+          currentTimeRef.current = Math.floor(time);
+          setCurrentTime(Math.floor(time));
+        }
+        if (typeof dur === "number" && !isNaN(dur) && dur > 60) {
+          durationRef.current = Math.floor(dur);
+          setDuration(Math.floor(dur));
+        }
+      } catch {}
+    };
+
+    window.addEventListener("message", handlePlayerMessage);
+    return () => window.removeEventListener("message", handlePlayerMessage);
+  }, []);
+
+  // Handle restarting from beginning (00:00)
+  const handleRestartFromBeginning = () => {
+    currentTimeRef.current = 0;
+    setCurrentTime(0);
+    setStartOffset(0);
+    setResumeToast(null);
+    flushProgress(0);
+    setReloadKey((prev) => prev + 1);
+  };
+
+  // Handle manual progress scrub
+  const handleScrub = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    const newTime = Math.round(ratio * (durationRef.current || defaultDuration));
+    currentTimeRef.current = newTime;
+    setCurrentTime(newTime);
+    setStartOffset(newTime);
+    flushProgress(newTime);
+  };
 
   // Native Default Device Fullscreen (iOS AVPlayer / Android Samsung Video Player)
   const toggleFullscreen = useCallback(() => {
@@ -327,11 +531,21 @@ export default function RedzoneVideoPlayer({
   const streamUrl = useMemo(() => {
     if (!itemId) return "";
     setIframeLoading(true);
-    if (isTV) {
-      return currentServer.getTvUrl(itemId, season, episode);
+    let base = isTV
+      ? currentServer.getTvUrl(itemId, season, episode)
+      : currentServer.getMovieUrl(itemId);
+
+    // If we have a saved resume position > 10 seconds, append start query for supported providers
+    if (startOffset > 10) {
+      const sec = Math.floor(startOffset);
+      if (base.includes("videasy.net") || base.includes("vidlink.pro") || base.includes("embed.su")) {
+        base += `${base.includes("?") ? "&" : "?"}start=${sec}`;
+      } else if (base.includes("autoembed.cc") || base.includes("vidsrc")) {
+        base += `${base.includes("?") ? "&" : "?"}t=${sec}`;
+      }
     }
-    return currentServer.getMovieUrl(itemId);
-  }, [currentServer, itemId, isTV, season, episode]);
+    return base;
+  }, [currentServer, itemId, isTV, season, episode, startOffset]);
 
   const currentEpisodeObj = useMemo(() => {
     return seasonEpisodes.find((e) => e.episode_number === episode);
@@ -393,6 +607,37 @@ export default function RedzoneVideoPlayer({
             <div className="redzone-spinner-ring" />
             <div className="redzone-spinner-text">Connecting to {currentServer.name}…</div>
             <div className="redzone-spinner-subtext">{currentServer.quality} • Fast Stream</div>
+          </div>
+        )}
+
+        {/* Resume Playback Toast Notification */}
+        {resumeToast && (
+          <div className="redzone-resume-toast" onClick={(e) => e.stopPropagation()}>
+            <div className="redzone-resume-toast-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            </div>
+            <div className="redzone-resume-toast-text">
+              <span>Resumed at</span>
+              <span className="redzone-resume-toast-highlight">{formatTime(resumeToast.time)}</span>
+            </div>
+            <button
+              type="button"
+              className="redzone-resume-restart-btn"
+              onClick={handleRestartFromBeginning}
+              title="Restart from beginning"
+            >
+              Start from beginning
+            </button>
+            <button
+              type="button"
+              className="redzone-resume-toast-close"
+              onClick={() => setResumeToast(null)}
+              aria-label="Dismiss resume notice"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -768,6 +1013,28 @@ export default function RedzoneVideoPlayer({
         className={`redzone-player-bottombar redzone-liquid-glass-bottombar ${showControls ? "visible" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Interactive Scrub Progress Bar */}
+        <div
+          className="redzone-player-progress-container"
+          onClick={handleScrub}
+          title={`Seek: ${formatTime(currentTime)} / ${formatTime(duration)}`}
+        >
+          <div className="redzone-player-progress-track">
+            <div
+              className="redzone-player-progress-fill"
+              style={{
+                width: `${Math.min(100, Math.max(0, duration > 0 ? (currentTime / duration) * 100 : 0))}%`,
+              }}
+            />
+            <div
+              className="redzone-player-progress-thumb"
+              style={{
+                left: `${Math.min(100, Math.max(0, duration > 0 ? (currentTime / duration) * 100 : 0))}%`,
+              }}
+            />
+          </div>
+        </div>
+
         <div className="redzone-player-bottombar-left">
           {/* Quality & Stream Specs Indicator */}
           <div className="redzone-bottom-quality-group">
@@ -779,6 +1046,13 @@ export default function RedzoneVideoPlayer({
               <span className="redzone-bottom-specs-dot">•</span>
               <span className="redzone-bottom-tag-label">{currentServer.tag}</span>
             </div>
+          </div>
+
+          {/* Time readout */}
+          <div className="redzone-player-time-display">
+            <span className="redzone-player-time-current">{formatTime(currentTime)}</span>
+            <span className="redzone-player-time-sep">/</span>
+            <span className="redzone-player-time-total">{formatTime(duration)}</span>
           </div>
         </div>
 
@@ -814,21 +1088,6 @@ export default function RedzoneVideoPlayer({
               </svg>
             </button>
           )}
-
-          {/* Direct Clean Popout */}
-          <button
-            type="button"
-            className="redzone-player-skip-btn redzone-liquid-glass-btn"
-            onClick={() => window.open(streamUrl, "_blank", "noopener,noreferrer")}
-            title="Open in Clean Popout Window"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
-            </svg>
-            <span>Popout</span>
-          </button>
 
           {/* Fullscreen Button in Bottom Bar */}
           <button

@@ -83,8 +83,12 @@ export const NetflixRow = memo(function NetflixRow({
             const year = (item.release_date || item.first_air_date || "").slice(0, 4);
             const image = imgUrl(item.backdrop_path, "w500") || imgUrl(item.poster_path, "w342");
             const posterImage = imgUrl(item.poster_path, "w342") || image;
-            const progressKey = isTV ? `tv_${item.id}` : `movie_${item.id}`;
-            const progressPct = progressMap[progressKey] || 0;
+            const progressKey = isTV
+              ? (item.season != null && item.episode != null
+                  ? `tv_${item.id}_s${item.season}e${item.episode}`
+                  : `tv_${item.id}`)
+              : `movie_${item.id}`;
+            const progressPct = progressMap[progressKey] || progressMap[`tv_${item.id}`] || item.progress || 0;
             const matchScore = item.vote_average ? Math.min(99, Math.round(item.vote_average * 10) + 2) : 97;
             const saved = isSaved ? isSaved(item) : false;
 
@@ -102,7 +106,7 @@ export const NetflixRow = memo(function NetflixRow({
                     ) : (
                       <div className="netflix-card-title-fallback">{itemTitle}</div>
                     )}
-                    <span className="netflix-card-n-badge">N</span>
+                    <span className="netflix-card-n-badge">R</span>
                   </div>
                 </div>
               );
