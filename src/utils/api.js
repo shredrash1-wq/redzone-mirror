@@ -126,7 +126,7 @@ export const PLAYER_SOURCES = [
   {
     id: "videasy",
     label: "Videasy",
-    tag: null,
+    tag: "FAST",
     note: null,
     supportsProgress: true,
     colorParam: "color", // hex without # → e.g. "e50914"
@@ -151,6 +151,32 @@ export const PLAYER_SOURCES = [
     movieUrl: (id) => `https://vsembed.su/embed/movie/${id}`,
     tvUrl: (id, season, ep) =>
       `https://vsembed.su/embed/tv/${id}/${season}/${ep}`,
+  },
+  {
+    id: "vidlink",
+    label: "VidLink",
+    tag: "MULTI-AUDIO",
+    note: null,
+    supportsProgress: true,
+    colorParam: "primaryColor",
+    langParam: "sub_lang",
+    params: {},
+    movieUrl: (id) => `https://vidlink.pro/movie/${id}`,
+    tvUrl: (id, season, ep) =>
+      `https://vidlink.pro/tv/${id}/${season}/${ep}`,
+  },
+  {
+    id: "autoembed",
+    label: "AutoEmbed",
+    tag: "DUBBED",
+    note: null,
+    supportsProgress: true,
+    colorParam: null,
+    langParam: "lang",
+    params: {},
+    movieUrl: (id) => `https://player.autoembed.cc/embed/movie/${id}`,
+    tvUrl: (id, season, ep) =>
+      `https://player.autoembed.cc/embed/tv/${id}/${season}/${ep}`,
   },
   {
     id: "vidking",
@@ -214,7 +240,9 @@ export const getSourceUrl = (
   if (dubMode === "dub") {
     url.searchParams.set("dub", "1");
     url.searchParams.set("audio", "dub");
+    url.searchParams.set("audio_lang", "en");
     url.searchParams.set("translationType", "dub");
+    url.searchParams.set("multi", "1");
   }
 
   Object.entries(extraParams).forEach(([key, value]) => {

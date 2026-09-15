@@ -36,9 +36,25 @@ export function useBlockedStats(resetKey) {
     sessionDomainsRef.current = {};
   }, [resetKey]);
 
-  // Listen for batched block updates from main process
+  // Listen for batched block updates from main process or web AdShield
   useEffect(() => {
-    if (!window.electron?.onBlockedUpdate) return;
+    const webHandler = (e) => {
+      const data = e.detail;
+      if (!data) return;
+      const count = data.count || 1;
+      setAlltimeTotal((prev) => prev + count);
+      setSessionTotal((prev) => prev + count);
+      const domain = data.domain || "ad-network";
+      sessionDomainsRef.current[domain] = (sessionDomainsRef.current[domain] || 0) + count;
+    };
+    window.addEventListener("streambert-adblocked", webHandler);
+
+    if (!window.electron?.onBlockedUpdate) {
+      return () => {
+        window.removeEventListener("streambert-adblocked", webHandler);
+      };
+    }
+
     const handler = window.electron.onBlockedUpdate((data) => {
       if (!data) return;
       // Increment alltime display counter
@@ -51,6 +67,7 @@ export function useBlockedStats(resetKey) {
       }
     });
     return () => {
+      window.removeEventListener("streambert-adblocked", webHandler);
       if (window.electron?.offBlockedUpdate)
         window.electron.offBlockedUpdate(handler);
     };

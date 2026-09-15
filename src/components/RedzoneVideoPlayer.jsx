@@ -403,6 +403,7 @@ export default function RedzoneVideoPlayer({
           title={title}
           className="redzone-player-iframe redzone-player-iframe--fluid"
           referrerPolicy="no-referrer"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-encrypted-media"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen *"
           allowFullScreen={true}
           webkitallowfullscreen="true"

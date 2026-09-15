@@ -891,6 +891,27 @@ export default function MoviePage({
                 {isSaved ? <BookmarkFillIcon /> : <BookmarkIcon />}
                 {isSaved ? "Saved" : "Save"}
               </button>
+              {(isAnime || (item?.original_language && item.original_language !== "en") || sourceIsAsync(playerSource) || playerSource === "allmanga" || playerSource === "autoembed" || playerSource === "vidlink") && (
+                <button
+                  className={`btn ${dubMode === "dub" ? "btn-primary" : "btn-secondary"}`}
+                  onClick={() => {
+                    const next = dubMode === "sub" ? "dub" : "sub";
+                    setDubMode(next);
+                    storage.set(STORAGE_KEYS.ALLMANGA_DUB_MODE, next);
+                    lastResolvedMovieKeyRef.current = "";
+                    resolvedPlayerUrlRef.current = null;
+                    setResolvedPlayerUrl(null);
+                    setM3u8Url(null);
+                    setInterceptedSubs([]);
+                    resolvingUrlRef.current = false;
+                    setResolvingUrl(false);
+                    setResolveError(null);
+                  }}
+                  title="Toggle Original Subbed or English Dubbed Audio"
+                >
+                  {dubMode === "dub" ? "🔊 English Dub" : isAnime ? "🎙️ Japanese Sub" : "🎙️ Original / Sub"}
+                </button>
+              )}
               {!isUnreleased &&
                 (isWatched ? (
                   <button
@@ -1086,6 +1107,8 @@ export default function MoviePage({
                       )
                 }
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-encrypted-media"
+                referrerPolicy="no-referrer"
                 allowFullScreen
                 onLoad={() => setWebviewLoading(false)}
                 style={{
@@ -1199,9 +1222,76 @@ export default function MoviePage({
             {showSourceMenu && menuPos && (
               <div
                 className="source-dropdown source-dropdown--fixed"
-                style={{ top: menuPos.top, left: menuPos.left }}
+                style={{ top: menuPos.top, left: menuPos.left, minWidth: "220px" }}
                 onClick={(e) => e.stopPropagation()}
               >
+                <div style={{ padding: "8px 12px 4px", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", color: "var(--text3)", letterSpacing: "0.5px" }}>
+                  Audio Language
+                </div>
+                <div style={{ display: "flex", gap: "6px", padding: "0 10px 8px" }}>
+                  <button
+                    type="button"
+                    style={{
+                      flex: 1,
+                      padding: "6px 8px",
+                      fontSize: "12px",
+                      fontWeight: dubMode === "sub" ? "700" : "500",
+                      borderRadius: "6px",
+                      border: dubMode === "sub" ? "1px solid var(--red)" : "1px solid rgba(255,255,255,0.15)",
+                      background: dubMode === "sub" ? "rgba(229, 9, 20, 0.35)" : "rgba(255,255,255,0.06)",
+                      color: "#fff",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                    onClick={() => {
+                      setDubMode("sub");
+                      storage.set(STORAGE_KEYS.ALLMANGA_DUB_MODE, "sub");
+                      lastResolvedMovieKeyRef.current = "";
+                      resolvedPlayerUrlRef.current = null;
+                      setResolvedPlayerUrl(null);
+                      setM3u8Url(null);
+                      setInterceptedSubs([]);
+                      resolvingUrlRef.current = false;
+                      setResolvingUrl(false);
+                      setResolveError(null);
+                    }}
+                  >
+                    🎙️ Sub
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      flex: 1,
+                      padding: "6px 8px",
+                      fontSize: "12px",
+                      fontWeight: dubMode === "dub" ? "700" : "500",
+                      borderRadius: "6px",
+                      border: dubMode === "dub" ? "1px solid var(--red)" : "1px solid rgba(255,255,255,0.15)",
+                      background: dubMode === "dub" ? "rgba(229, 9, 20, 0.35)" : "rgba(255,255,255,0.06)",
+                      color: "#fff",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                    onClick={() => {
+                      setDubMode("dub");
+                      storage.set(STORAGE_KEYS.ALLMANGA_DUB_MODE, "dub");
+                      lastResolvedMovieKeyRef.current = "";
+                      resolvedPlayerUrlRef.current = null;
+                      setResolvedPlayerUrl(null);
+                      setM3u8Url(null);
+                      setInterceptedSubs([]);
+                      resolvingUrlRef.current = false;
+                      setResolvingUrl(false);
+                      setResolveError(null);
+                    }}
+                  >
+                    🔊 Dub
+                  </button>
+                </div>
+                <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "4px 0 8px" }} />
+                <div style={{ padding: "0 12px 4px", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", color: "var(--text3)", letterSpacing: "0.5px" }}>
+                  Server / Source
+                </div>
                 {PLAYER_SOURCES.map((src) => (
                   <button
                     key={src.id}
@@ -1280,6 +1370,68 @@ export default function MoviePage({
                 </span>
               )}
             </button>
+          </div>
+
+          {/* Quick bottom player controls bar for Source, Dubbing & Options */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "10px",
+              marginTop: "12px",
+              padding: "10px 14px",
+              background: "rgba(255, 255, 255, 0.04)",
+              borderRadius: "10px",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: 12, fontWeight: "600", color: "var(--text3)" }}>
+                Audio:
+              </span>
+              <button
+                className={`btn ${dubMode === "dub" ? "btn-primary" : "btn-ghost"}`}
+                style={{ padding: "5px 12px", fontSize: "12px", fontWeight: "600" }}
+                onClick={() => {
+                  const next = dubMode === "sub" ? "dub" : "sub";
+                  setDubMode(next);
+                  storage.set(STORAGE_KEYS.ALLMANGA_DUB_MODE, next);
+                  lastResolvedMovieKeyRef.current = "";
+                  resolvedPlayerUrlRef.current = null;
+                  setResolvedPlayerUrl(null);
+                  setM3u8Url(null);
+                  setInterceptedSubs([]);
+                  resolvingUrlRef.current = false;
+                  setResolvingUrl(false);
+                  setResolveError(null);
+                }}
+              >
+                {dubMode === "dub" ? "🔊 English Dub" : "🎙️ Japanese Sub"}
+              </button>
+              <button
+                className="btn btn-ghost"
+                style={{ padding: "5px 12px", fontSize: "12px", gap: "5px" }}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setMenuPos({ top: rect.bottom + 6, left: rect.left });
+                  setShowSourceMenu((v) => !v);
+                }}
+              >
+                <SourceIcon /> Source: {PLAYER_SOURCES.find((s) => s.id === playerSource)?.label ?? "Default"}
+              </button>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button
+                className="btn btn-ghost"
+                style={{ padding: "5px 12px", fontSize: "12px", gap: "5px" }}
+                onClick={() => setShowDownload(true)}
+              >
+                <DownloadIcon /> Download
+              </button>
+            </div>
           </div>
 
           {displayPct > 0 && (
