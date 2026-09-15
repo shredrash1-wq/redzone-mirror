@@ -14,7 +14,15 @@ export default function NetflixHero({ item, onPlay, onMoreInfo, ageRating }) {
   const overview = item.overview || "Now streaming on REDZONE. Watch top blockbusters, award-winning series, and original productions.";
 
   return (
-    <div className="netflix-billboard">
+    <div
+      className="netflix-billboard"
+      onClick={(e) => {
+        if (!e.target.closest("button")) {
+          onMoreInfo?.(item);
+        }
+      }}
+      style={{ cursor: "pointer" }}
+    >
       {backdrop ? (
         <img
           src={backdrop}
@@ -67,7 +75,10 @@ export default function NetflixHero({ item, onPlay, onMoreInfo, ageRating }) {
         <div className="netflix-billboard-actions">
           <button
             className="netflix-btn-play"
-            onClick={() => onPlay(item)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlay?.(item);
+            }}
             title="Play"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -78,7 +89,10 @@ export default function NetflixHero({ item, onPlay, onMoreInfo, ageRating }) {
 
           <button
             className="netflix-btn-info"
-            onClick={() => onMoreInfo(item)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoreInfo?.(item);
+            }}
             title="More Info"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">

@@ -243,12 +243,24 @@ export default function GuestLoginPage({ onLogin }) {
     setEditingProfile(null);
   };
 
+  const handleBannerClick = () => {
+    // If not managing, logging in with first available profile (default "redzone")
+    if (isManaging) return;
+    const activeProfile = profiles[0] || DEFAULT_INITIAL_PROFILES[0];
+    handleSelectProfile(activeProfile);
+  };
+
   const currentBanner = banners[bannerIndex] || banners[0];
 
   return (
     <div className="redzone-profile-screen-v2">
       {/* ── TOP MONEY / MOVIE BANNER CAROUSEL ──────────────────────────────── */}
-      <div className="redzone-hero-banner-wrap">
+      <div
+        className="redzone-hero-banner-wrap"
+        onClick={handleBannerClick}
+        style={{ cursor: isManaging ? "default" : "pointer" }}
+        title="Tap to Watch on REDZONE"
+      >
         {banners.map((b, idx) => (
           <div
             key={b.id || idx}
@@ -277,12 +289,15 @@ export default function GuestLoginPage({ onLogin }) {
           <p className="redzone-banner-subtitle">{currentBanner.subtitle}</p>
 
           {/* Slide Indicator Dots */}
-          <div className="redzone-banner-dots">
+          <div className="redzone-banner-dots" onClick={(e) => e.stopPropagation()}>
             {banners.map((_, idx) => (
               <span
                 key={idx}
                 className={`redzone-banner-dot ${idx === bannerIndex ? "active" : ""}`}
-                onClick={() => setBannerIndex(idx)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setBannerIndex(idx);
+                }}
               />
             ))}
           </div>
