@@ -16,12 +16,12 @@ const DEFAULT_INITIAL_PROFILES = [
   },
 ];
 
-// Featured Top Banners that rotate every few seconds (matching Netflix mobile profile design)
+// Featured Top Banners that rotate every few seconds (matching REDZONE mobile profile design)
 const FEATURED_HERO_BANNERS = [
   {
     id: "lust_stories_3",
     title: "Lust Stories 3",
-    brand: "NETFLIX",
+    brand: "REDZONE",
     subtitle: "Coming on Friday",
     imageUrl:
       "https://images.unsplash.com/photo-1578836537282-3171d77f8632?auto=format&fit=crop&w=1200&q=80",
@@ -32,7 +32,7 @@ const FEATURED_HERO_BANNERS = [
   {
     id: "money_heist",
     title: "Money Heist",
-    brand: "NETFLIX",
+    brand: "REDZONE",
     subtitle: "Watch Part 5: The Final Season",
     imageUrl:
       "https://image.tmdb.org/t/p/original/reEMJA1uzscCbk5rUh1bBm7m04L.jpg",
@@ -43,7 +43,7 @@ const FEATURED_HERO_BANNERS = [
   {
     id: "stranger_things",
     title: "Stranger Things",
-    brand: "NETFLIX",
+    brand: "REDZONE",
     subtitle: "The Final Adventure • Season 5",
     imageUrl:
       "https://image.tmdb.org/t/p/original/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
@@ -54,7 +54,7 @@ const FEATURED_HERO_BANNERS = [
   {
     id: "wednesday",
     title: "Wednesday",
-    brand: "NETFLIX",
+    brand: "REDZONE",
     subtitle: "Season 2 • Dark & Mischievous",
     imageUrl:
       "https://image.tmdb.org/t/p/original/9PFonQ95Ki6VyDCguUrE4Am9agq.jpg",
@@ -65,7 +65,7 @@ const FEATURED_HERO_BANNERS = [
   {
     id: "squid_game",
     title: "Squid Game",
-    brand: "NETFLIX",
+    brand: "REDZONE",
     subtitle: "The Real Game Begins • Season 3",
     imageUrl:
       "https://image.tmdb.org/t/p/original/dDlGca4hY74e8z2jN4k49zJb14m.jpg",
@@ -128,7 +128,7 @@ export default function GuestLoginPage({ onLogin }) {
             .map((item) => ({
               id: "tmdb_" + item.id,
               title: item.title || item.name,
-              brand: "NETFLIX",
+              brand: "REDZONE",
               subtitle: item.release_date
                 ? `Trending • Released ${item.release_date.slice(0, 4)}`
                 : "Top 10 in Movies Today",
@@ -283,7 +283,7 @@ export default function GuestLoginPage({ onLogin }) {
         {/* Banner Content overlay (Title, Brand & Tagline) */}
         <div className="redzone-hero-banner-content">
           <div className="redzone-banner-brand">
-            {currentBanner.brand || "NETFLIX"}
+            {currentBanner.brand || "REDZONE"}
           </div>
           <h1 className="redzone-banner-title">{currentBanner.title}</h1>
           <p className="redzone-banner-subtitle">{currentBanner.subtitle}</p>
