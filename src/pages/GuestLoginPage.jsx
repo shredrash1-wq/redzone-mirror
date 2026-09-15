@@ -1,105 +1,204 @@
-import { useState, useEffect } from "react";
-import NetflixLogo from "../components/NetflixLogo";
+import React, { useState, useEffect, useRef } from "react";
+import ProfileAvatar, { AVATAR_PRESETS } from "../components/ProfileAvatar";
 import { storage } from "../utils/storage";
-
-const AVATAR_OPTIONS = [
-  { icon: "🍿", label: "Popcorn" },
-  { icon: "🎬", label: "Cinema" },
-  { icon: "👑", label: "Crown" },
-  { icon: "🕶️", label: "Shades" },
-  { icon: "🚀", label: "Rocket" },
-  { icon: "🦊", label: "Fox" },
-  { icon: "⚡", label: "Lightning" },
-  { icon: "🎮", label: "Gamer" },
-  { icon: "🎧", label: "Beats" },
-  { icon: "🦁", label: "Lion" },
-  { icon: "🍕", label: "Pizza" },
-  { icon: "💎", label: "Diamond" },
-  { icon: "🤖", label: "Robot" },
-  { icon: "🐱", label: "Cat" },
-  { icon: "🌟", label: "Star" },
-];
-
-const COLOR_OPTIONS = [
-  { hex: "#E50914", name: "Redzone Red" },
-  { hex: "#0071eb", name: "Electric Blue" },
-  { hex: "#ffaa00", name: "Amber Gold" },
-  { hex: "#9933cc", name: "Royal Purple" },
-  { hex: "#2bb871", name: "Emerald Green" },
-  { hex: "#e91e63", name: "Neon Pink" },
-];
 
 const PROFILES_STORAGE_KEY = "redzone_user_profiles";
 
+// Initial profiles: ONLY 1 default profile named "redzone" (no other pre-made profiles)
+const DEFAULT_INITIAL_PROFILES = [
+  {
+    id: "profile_redzone",
+    name: "redzone",
+    avatar: "smiley_red",
+    color: "#E50914",
+    isKids: false,
+    createdAt: Date.now(),
+  },
+];
+
+// Featured Top Banners that rotate every few seconds (matching Netflix mobile profile design)
+const FEATURED_HERO_BANNERS = [
+  {
+    id: "lust_stories_3",
+    title: "Lust Stories 3",
+    brand: "NETFLIX",
+    subtitle: "Coming on Friday",
+    imageUrl:
+      "https://images.unsplash.com/photo-1578836537282-3171d77f8632?auto=format&fit=crop&w=1200&q=80",
+    bgGradient:
+      "linear-gradient(to bottom, rgba(30, 8, 14, 0) 0%, rgba(30, 8, 14, 0.4) 40%, rgba(30, 8, 14, 0.9) 75%, #19060c 100%)",
+    themeColor: "#570d1a",
+  },
+  {
+    id: "money_heist",
+    title: "Money Heist",
+    brand: "NETFLIX",
+    subtitle: "Watch Part 5: The Final Season",
+    imageUrl:
+      "https://image.tmdb.org/t/p/original/reEMJA1uzscCbk5rUh1bBm7m04L.jpg",
+    bgGradient:
+      "linear-gradient(to bottom, rgba(20, 6, 8, 0) 0%, rgba(20, 6, 8, 0.4) 40%, rgba(20, 6, 8, 0.9) 75%, #140507 100%)",
+    themeColor: "#450a0a",
+  },
+  {
+    id: "stranger_things",
+    title: "Stranger Things",
+    brand: "NETFLIX",
+    subtitle: "The Final Adventure • Season 5",
+    imageUrl:
+      "https://image.tmdb.org/t/p/original/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
+    bgGradient:
+      "linear-gradient(to bottom, rgba(10, 14, 28, 0) 0%, rgba(10, 14, 28, 0.4) 40%, rgba(10, 14, 28, 0.9) 75%, #080a14 100%)",
+    themeColor: "#0f172a",
+  },
+  {
+    id: "wednesday",
+    title: "Wednesday",
+    brand: "NETFLIX",
+    subtitle: "Season 2 • Dark & Mischievous",
+    imageUrl:
+      "https://image.tmdb.org/t/p/original/9PFonQ95Ki6VyDCguUrE4Am9agq.jpg",
+    bgGradient:
+      "linear-gradient(to bottom, rgba(16, 12, 22, 0) 0%, rgba(16, 12, 22, 0.4) 40%, rgba(16, 12, 22, 0.9) 75%, #0d0913 100%)",
+    themeColor: "#1e1329",
+  },
+  {
+    id: "squid_game",
+    title: "Squid Game",
+    brand: "NETFLIX",
+    subtitle: "The Real Game Begins • Season 3",
+    imageUrl:
+      "https://image.tmdb.org/t/p/original/dDlGca4hY74e8z2jN4k49zJb14m.jpg",
+    bgGradient:
+      "linear-gradient(to bottom, rgba(24, 8, 18, 0) 0%, rgba(24, 8, 18, 0.4) 40%, rgba(24, 8, 18, 0.9) 75%, #12040d 100%)",
+    themeColor: "#380e22",
+  },
+];
+
 export default function GuestLoginPage({ onLogin }) {
-  // Load only user-created profiles from storage; start with an empty array if none exist
+  // Load user profiles from storage, or fallback to the single initial "redzone" profile
   const [profiles, setProfiles] = useState(() => {
     const saved = storage.get(PROFILES_STORAGE_KEY);
-    return Array.isArray(saved) ? saved : [];
+    if (Array.isArray(saved) && saved.length > 0) {
+      return saved;
+    }
+    // Save the single default profile
+    storage.set(PROFILES_STORAGE_KEY, DEFAULT_INITIAL_PROFILES);
+    return DEFAULT_INITIAL_PROFILES;
   });
 
   const [isManaging, setIsManaging] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showModal, setShowModal] = useState(false); // Add or Edit Profile modal
   const [editingProfile, setEditingProfile] = useState(null);
 
-  // Form State for creating / editing
+  // Form states for creating / editing
   const [formName, setFormName] = useState("");
-  const [formAvatar, setFormAvatar] = useState(AVATAR_OPTIONS[0].icon);
-  const [formColor, setFormColor] = useState(COLOR_OPTIONS[0].hex);
+  const [formAvatar, setFormAvatar] = useState("smiley_red");
+  const [formColor, setFormColor] = useState("#E50914");
   const [formIsKids, setFormIsKids] = useState(false);
-  const [formError, setFormError] = useState("");
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
-  // Automatically prompt to create profile if no profiles exist yet
+  // Top banner carousel state
+  const [banners, setBanners] = useState(FEATURED_HERO_BANNERS);
+  const [bannerIndex, setBannerIndex] = useState(0);
+
+  // Rotate banner every 5 seconds
   useEffect(() => {
-    if (profiles.length === 0) {
-      setShowCreateModal(true);
-    }
-  }, [profiles.length]);
+    const timer = setInterval(() => {
+      setBannerIndex((prev) => (prev + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
 
-  const saveProfilesToStorage = (updatedList) => {
-    setProfiles(updatedList);
-    storage.set(PROFILES_STORAGE_KEY, updatedList);
+  // Optionally fetch trending TMDB titles to enhance the carousel
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchTrendingBanners() {
+      try {
+        const apiKey = storage.get("tmdb_api_key") || "84128509c693a7eb73d6b8b3db208579";
+        const res = await fetch(
+          `https://api.themoviedb.org/3/trending/all/day?api_key=${apiKey}`,
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.results && data.results.length > 0 && isMounted) {
+          const tmdbBanners = data.results
+            .filter((item) => item.backdrop_path && (item.title || item.name))
+            .slice(0, 6)
+            .map((item) => ({
+              id: "tmdb_" + item.id,
+              title: item.title || item.name,
+              brand: "NETFLIX",
+              subtitle: item.release_date
+                ? `Trending • Released ${item.release_date.slice(0, 4)}`
+                : "Top 10 in Movies Today",
+              imageUrl: `https://image.tmdb.org/t/p/original${item.backdrop_path}`,
+              bgGradient:
+                "linear-gradient(to bottom, rgba(20, 8, 14, 0) 0%, rgba(20, 8, 14, 0.4) 40%, rgba(20, 8, 14, 0.9) 75%, #19060c 100%)",
+              themeColor: "#2b0d16",
+            }));
+
+          if (tmdbBanners.length > 0) {
+            setBanners([FEATURED_HERO_BANNERS[0], ...tmdbBanners]);
+          }
+        }
+      } catch {
+        // Fallback gracefully to default curated banners
+      }
+    }
+    fetchTrendingBanners();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const saveProfiles = (list) => {
+    setProfiles(list);
+    storage.set(PROFILES_STORAGE_KEY, list);
   };
 
   const handleSelectProfile = (profile) => {
     if (isManaging) {
-      // Open edit mode for this profile
+      // In edit mode: clicking a profile opens the Edit Profile screen
       setEditingProfile(profile);
       setFormName(profile.name);
-      setFormAvatar(profile.avatar || AVATAR_OPTIONS[0].icon);
-      setFormColor(profile.color || COLOR_OPTIONS[0].hex);
+      setFormAvatar(profile.avatar || "smiley_red");
+      setFormColor(profile.color || "#E50914");
       setFormIsKids(Boolean(profile.isKids));
-      setFormError("");
+      setShowAvatarPicker(false);
+      setShowModal(true);
       return;
     }
 
+    // Normal mode: Log in with this profile
     onLogin({
       id: profile.id,
       username: profile.name,
-      avatar: profile.avatar || "👤",
+      avatar: profile.avatar || "smiley_red",
       color: profile.color || "#E50914",
       isKids: Boolean(profile.isKids),
       loginTime: Date.now(),
     });
   };
 
-  const handleOpenCreate = () => {
+  const handleOpenAdd = () => {
     setEditingProfile(null);
     setFormName("");
-    setFormAvatar(AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)].icon);
-    setFormColor(COLOR_OPTIONS[Math.floor(Math.random() * COLOR_OPTIONS.length)].hex);
+    // Pick next attractive smiley color
+    const colors = ["smiley_blue", "smiley_yellow", "smiley_green", "smiley_purple", "smiley_pink", "smiley_red"];
+    const chosen = colors[profiles.length % colors.length];
+    const preset = AVATAR_PRESETS.find((p) => p.id === chosen) || AVATAR_PRESETS[0];
+    setFormAvatar(preset.id);
+    setFormColor(preset.color);
     setFormIsKids(false);
-    setFormError("");
-    setShowCreateModal(true);
+    setShowAvatarPicker(false);
+    setShowModal(true);
   };
 
   const handleSaveProfile = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     const trimmed = formName.trim();
-    if (!trimmed) {
-      setFormError("Please enter a profile name.");
-      return;
-    }
+    if (!trimmed) return;
 
     if (editingProfile) {
       // Update existing profile
@@ -112,249 +211,349 @@ export default function GuestLoginPage({ onLogin }) {
               color: formColor,
               isKids: formIsKids,
             }
-          : p
+          : p,
       );
-      saveProfilesToStorage(updated);
+      saveProfiles(updated);
+      setShowModal(false);
       setEditingProfile(null);
     } else {
       // Create new profile
-      const newProfile = {
+      const newProf = {
         id: "profile_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
         name: trimmed,
-        avatar: formAvatar,
+        avatar: formIsKids ? "kids" : formAvatar,
         color: formColor,
         isKids: formIsKids,
         createdAt: Date.now(),
       };
-      const updated = [...profiles, newProfile];
-      saveProfilesToStorage(updated);
-      setShowCreateModal(false);
-
-      // If it was their first profile, log in immediately
-      if (profiles.length === 0) {
-        onLogin({
-          id: newProfile.id,
-          username: newProfile.name,
-          avatar: newProfile.avatar,
-          color: newProfile.color,
-          isKids: Boolean(newProfile.isKids),
-          loginTime: Date.now(),
-        });
-      }
+      const updated = [...profiles, newProf];
+      saveProfiles(updated);
+      setShowModal(false);
     }
   };
 
   const handleDeleteProfile = (idToDelete) => {
+    if (profiles.length <= 1) {
+      alert("You must keep at least one profile.");
+      return;
+    }
     const updated = profiles.filter((p) => p.id !== idToDelete);
-    saveProfilesToStorage(updated);
+    saveProfiles(updated);
+    setShowModal(false);
     setEditingProfile(null);
   };
 
+  const currentBanner = banners[bannerIndex] || banners[0];
+
   return (
-    <div className="redzone-profile-screen">
-      {/* Top Left REDZONE Logo */}
-      <header className="redzone-profile-header">
-        <NetflixLogo width={130} height={38} />
-      </header>
+    <div className="redzone-profile-screen-v2">
+      {/* ── TOP MONEY / MOVIE BANNER CAROUSEL ──────────────────────────────── */}
+      <div className="redzone-hero-banner-wrap">
+        {banners.map((b, idx) => (
+          <div
+            key={b.id || idx}
+            className={`redzone-hero-banner-slide ${idx === bannerIndex ? "active" : ""}`}
+            style={{
+              backgroundImage: `url("${b.imageUrl}")`,
+            }}
+          >
+            <div
+              className="redzone-hero-banner-overlay"
+              style={{
+                background:
+                  b.bgGradient ||
+                  "linear-gradient(to bottom, rgba(20, 8, 14, 0) 0%, rgba(20, 8, 14, 0.4) 40%, rgba(20, 8, 14, 0.9) 75%, #14080e 100%)",
+              }}
+            />
+          </div>
+        ))}
 
-      {/* Main Content: Profiles Selection */}
-      <main className="redzone-profile-main">
-        <h1 className="redzone-profile-title">
-          {isManaging ? "Manage Profiles" : "Who's watching?"}
-        </h1>
+        {/* Banner Content overlay (Title, Brand & Tagline) */}
+        <div className="redzone-hero-banner-content">
+          <div className="redzone-banner-brand">
+            {currentBanner.brand || "NETFLIX"}
+          </div>
+          <h1 className="redzone-banner-title">{currentBanner.title}</h1>
+          <p className="redzone-banner-subtitle">{currentBanner.subtitle}</p>
 
-        <div className="redzone-profile-grid">
+          {/* Slide Indicator Dots */}
+          <div className="redzone-banner-dots">
+            {banners.map((_, idx) => (
+              <span
+                key={idx}
+                className={`redzone-banner-dot ${idx === bannerIndex ? "active" : ""}`}
+                onClick={() => setBannerIndex(idx)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── BOTTOM PROFILES SELECTION SECTION ──────────────────────────────── */}
+      <div className="redzone-profiles-section">
+        <h2 className="redzone-choose-title">Choose your profile</h2>
+
+        <div className="redzone-profiles-grid-3col">
+          {/* Render all user profiles */}
           {profiles.map((profile) => (
             <div
               key={profile.id}
-              className="redzone-profile-item"
+              className="redzone-profile-card"
               onClick={() => handleSelectProfile(profile)}
             >
-              <div
-                className="redzone-profile-avatar-box"
-                style={{ backgroundColor: profile.color || "#E50914" }}
-              >
-                <span className="redzone-profile-avatar-symbol">{profile.avatar}</span>
+              <div className="redzone-profile-avatar-wrapper">
+                <ProfileAvatar
+                  avatar={profile.avatar}
+                  color={profile.color}
+                  isKids={profile.isKids}
+                  size={92}
+                  borderRadius={18}
+                  className="redzone-profile-card-avatar"
+                />
+
+                {/* Edit Pencil Overlay badge when in Manage mode */}
                 {isManaging && (
-                  <div className="redzone-profile-edit-overlay">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  <div className="redzone-profile-edit-badge">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#ffffff"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                     </svg>
                   </div>
                 )}
-                {profile.isKids && (
-                  <div className="redzone-profile-kids-badge">KIDS</div>
-                )}
               </div>
-              <span className="redzone-profile-name">{profile.name}</span>
+              <span className="redzone-profile-card-name">{profile.name}</span>
             </div>
           ))}
 
-          {/* Add Profile Tile (up to 5 profiles) */}
-          {profiles.length < 5 && (
-            <div
-              className="redzone-profile-item redzone-profile-add-item"
-              onClick={handleOpenCreate}
-            >
-              <div className="redzone-profile-avatar-box redzone-profile-add-box">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          {/* Add Profile Button */}
+          {profiles.length < 6 && (
+            <div className="redzone-profile-card" onClick={handleOpenAdd}>
+              <div className="redzone-profile-action-box">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
               </div>
-              <span className="redzone-profile-name">Add Profile</span>
+              <span className="redzone-profile-card-name">Add</span>
             </div>
           )}
-        </div>
 
-        {/* Action Button: Manage Profiles / Done */}
-        {profiles.length > 0 && (
-          <div className="redzone-profile-actions">
-            <button
-              type="button"
-              className={`redzone-profile-manage-btn ${isManaging ? "active" : ""}`}
-              onClick={() => setIsManaging((prev) => !prev)}
+          {/* Edit / Done Button */}
+          <div
+            className="redzone-profile-card"
+            onClick={() => setIsManaging((prev) => !prev)}
+          >
+            <div
+              className={`redzone-profile-action-box ${isManaging ? "active" : ""}`}
             >
-              {isManaging ? "Done" : "Manage Profiles"}
-            </button>
+              {isManaging ? (
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg
+                  width="26"
+                  height="26"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+              )}
+            </div>
+            <span className="redzone-profile-card-name">
+              {isManaging ? "Done" : "Edit"}
+            </span>
           </div>
-        )}
-      </main>
+        </div>
+      </div>
 
-      {/* Modal: Create or Edit Profile */}
-      {(showCreateModal || editingProfile) && (
+      {/* ── ADD / EDIT PROFILE MODAL (Same to same like IMG_2831.png) ──────── */}
+      {showModal && (
         <div
-          className="redzone-modal-backdrop"
-          onClick={() => {
-            if (profiles.length > 0) {
-              setShowCreateModal(false);
-              setEditingProfile(null);
-            }
-          }}
+          className="redzone-modal-backdrop-v2"
+          onClick={() => setShowModal(false)}
         >
           <div
-            className="redzone-profile-form-modal"
+            className="redzone-add-profile-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="redzone-form-modal-title">
-              {editingProfile ? "Edit Profile" : "Create Profile"}
-            </h2>
-            <p className="redzone-form-modal-subtitle">
-              Add a personalized profile for another person watching REDZONE.
-            </p>
+            {/* Modal Header Bar */}
+            <div className="redzone-modal-top-bar">
+              <button
+                type="button"
+                className="redzone-modal-btn-cancel"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
+              <h3 className="redzone-modal-screen-title">
+                {editingProfile ? "Edit Profile" : "Add Profile"}
+              </h3>
+              <button
+                type="button"
+                className={`redzone-modal-btn-save ${formName.trim() ? "ready" : "disabled"}`}
+                disabled={!formName.trim()}
+                onClick={handleSaveProfile}
+              >
+                Save
+              </button>
+            </div>
 
-            <form onSubmit={handleSaveProfile} className="redzone-profile-form">
-              {/* Avatar Preview & Chooser */}
-              <div className="redzone-avatar-section">
+            {/* Main Modal Body */}
+            <div className="redzone-modal-body">
+              {/* Profile Avatar with Edit Pencil Badge */}
+              <div className="redzone-modal-avatar-center">
                 <div
-                  className="redzone-preview-avatar"
-                  style={{ backgroundColor: formColor }}
+                  className="redzone-modal-avatar-relative"
+                  onClick={() => setShowAvatarPicker((prev) => !prev)}
                 >
-                  <span className="redzone-preview-avatar-icon">{formAvatar}</span>
+                  <ProfileAvatar
+                    avatar={formIsKids ? "kids" : formAvatar}
+                    color={formColor}
+                    isKids={formIsKids}
+                    size={116}
+                    borderRadius={22}
+                  />
+                  {/* Floating Circular White Edit Badge */}
+                  <button
+                    type="button"
+                    className="redzone-avatar-edit-pencil-badge"
+                    aria-label="Change Avatar"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#000000"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                  </button>
                 </div>
+              </div>
 
-                <div className="redzone-avatar-options">
-                  <label className="redzone-field-label">Choose Avatar</label>
-                  <div className="redzone-avatar-picker-grid">
-                    {AVATAR_OPTIONS.map((opt) => (
+              {/* Avatar Selector Dropdown / Grid */}
+              {showAvatarPicker && (
+                <div className="redzone-avatar-picker-sheet">
+                  <div className="redzone-picker-title">Choose Avatar Icon</div>
+                  <div className="redzone-picker-grid">
+                    {AVATAR_PRESETS.map((preset) => (
                       <button
-                        key={opt.icon}
+                        key={preset.id}
                         type="button"
-                        className={`redzone-avatar-option-btn ${formAvatar === opt.icon ? "selected" : ""}`}
-                        onClick={() => setFormAvatar(opt.icon)}
-                        title={opt.label}
+                        className={`redzone-picker-avatar-btn ${formAvatar === preset.id ? "selected" : ""}`}
+                        onClick={() => {
+                          setFormAvatar(preset.id);
+                          setFormColor(preset.color);
+                          if (preset.id === "kids") {
+                            setFormIsKids(true);
+                          }
+                          setShowAvatarPicker(false);
+                        }}
                       >
-                        {opt.icon}
+                        <ProfileAvatar
+                          avatar={preset.id}
+                          color={preset.color}
+                          size={46}
+                          borderRadius={10}
+                        />
                       </button>
                     ))}
                   </div>
                 </div>
+              )}
+
+              {/* Profile Name Input Field */}
+              <div className="redzone-modal-input-group">
+                <input
+                  type="text"
+                  className="redzone-profile-name-input"
+                  placeholder="Profile name"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  maxLength={25}
+                  autoFocus
+                />
               </div>
 
-              {/* Color Chooser */}
-              <div className="redzone-form-group">
-                <label className="redzone-field-label">Avatar Theme Color</label>
-                <div className="redzone-color-picker-row">
-                  {COLOR_OPTIONS.map((c) => (
-                    <button
-                      key={c.hex}
-                      type="button"
-                      className={`redzone-color-dot ${formColor === c.hex ? "selected" : ""}`}
-                      style={{ backgroundColor: c.hex }}
-                      onClick={() => setFormColor(c.hex)}
-                      title={c.name}
+              {/* Kids Profile Switch Section */}
+              <div className="redzone-kids-profile-control">
+                <div className="redzone-kids-toggle-row">
+                  <label className="redzone-ios-toggle">
+                    <input
+                      type="checkbox"
+                      checked={formIsKids}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setFormIsKids(checked);
+                        if (checked && formAvatar !== "kids") {
+                          setFormAvatar("kids");
+                        } else if (!checked && formAvatar === "kids") {
+                          setFormAvatar("smiley_red");
+                        }
+                      }}
                     />
-                  ))}
+                    <span className="redzone-ios-slider" />
+                  </label>
+                </div>
+
+                <div className="redzone-kids-title">Kids Profile</div>
+                <div className="redzone-kids-description">
+                  Made for children 12 and under, but parents have all the control.
                 </div>
               </div>
 
-              {/* Profile Name Input */}
-              <div className="redzone-form-group">
-                <label className="redzone-field-label">Profile Name</label>
-                <input
-                  type="text"
-                  className="redzone-input"
-                  placeholder="e.g. Alex"
-                  value={formName}
-                  onChange={(e) => {
-                    setFormName(e.target.value);
-                    if (formError) setFormError("");
-                  }}
-                  autoFocus
-                  maxLength={25}
-                />
-                {formError && <div className="redzone-input-error">{formError}</div>}
-              </div>
-
-              {/* Kids Profile Toggle */}
-              <div className="redzone-kids-toggle-wrap">
-                <label className="redzone-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formIsKids}
-                    onChange={(e) => setFormIsKids(e.target.checked)}
-                    className="redzone-checkbox"
-                  />
-                  <div>
-                    <div className="redzone-checkbox-title">Kid's Profile?</div>
-                    <div className="redzone-checkbox-desc">
-                      Only display TV shows and movies rated for ages 12 and under.
-                    </div>
-                  </div>
-                </label>
-              </div>
-
-              {/* Buttons */}
-              <div className="redzone-form-buttons">
-                <button type="submit" className="redzone-btn-primary">
-                  {editingProfile ? "Save Changes" : "Create Profile"}
-                </button>
-
-                {profiles.length > 0 && (
+              {/* Delete Profile (when editing) */}
+              {editingProfile && (
+                <div className="redzone-modal-delete-wrap">
                   <button
                     type="button"
-                    className="redzone-btn-secondary"
-                    onClick={() => {
-                      setShowCreateModal(false);
-                      setEditingProfile(null);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                )}
-
-                {editingProfile && (
-                  <button
-                    type="button"
-                    className="redzone-btn-danger"
+                    className="redzone-btn-delete-profile"
                     onClick={() => handleDeleteProfile(editingProfile.id)}
                   >
                     Delete Profile
                   </button>
-                )}
-              </div>
-            </form>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

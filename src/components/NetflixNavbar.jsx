@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import NetflixLogo from "./NetflixLogo";
+import ProfileAvatar from "./ProfileAvatar";
 
 export default function NetflixNavbar({
   activeTab = "home",
@@ -345,10 +346,15 @@ export default function NetflixNavbar({
             className="netflix-avatar-btn"
             onClick={() => setShowProfileMenu((prev) => !prev)}
             aria-label="User profile"
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
           >
-            <div className="netflix-avatar-box">
-              {user?.avatar || "N"}
-            </div>
+            <ProfileAvatar
+              avatar={user?.avatar || "smiley_red"}
+              color={user?.color || "#E50914"}
+              isKids={Boolean(user?.isKids)}
+              size={32}
+              borderRadius={6}
+            />
             <span className="netflix-avatar-caret" />
           </button>
 
@@ -358,9 +364,13 @@ export default function NetflixNavbar({
                 className="netflix-profile-menu-item"
                 style={{ cursor: "default", opacity: 0.9 }}
               >
-                <div className="netflix-avatar-box" style={{ width: 24, height: 24, fontSize: 11 }}>
-                  {user?.avatar || "N"}
-                </div>
+                <ProfileAvatar
+                  avatar={user?.avatar || "smiley_red"}
+                  color={user?.color || "#E50914"}
+                  isKids={Boolean(user?.isKids)}
+                  size={26}
+                  borderRadius={5}
+                />
                 <span style={{ fontWeight: 600 }}>{user?.username || "Guest User"}</span>
               </div>
               <div className="netflix-profile-menu-divider" />

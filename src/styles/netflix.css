@@ -3028,422 +3028,515 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   REDZONE USER-DRIVEN PROFILE MANAGEMENT SCREEN
+   REDZONE USER-DRIVEN PROFILE MANAGEMENT SCREEN (MOBILE & DESKTOP MATCH)
    ══════════════════════════════════════════════════════════════════════════ */
-.redzone-profile-screen {
+.redzone-profile-screen-v2 {
   min-height: 100vh;
   width: 100%;
-  background-color: #141414;
+  background: #14080e;
+  background: radial-gradient(circle at 50% 0%, #300a18 0%, #17060d 45%, #0f0308 100%);
   color: #ffffff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   position: relative;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ── Top Hero Banner Carousel ── */
+.redzone-hero-banner-wrap {
+  position: relative;
+  width: 100%;
+  height: clamp(340px, 50vh, 480px);
+  overflow: hidden;
+  background-color: #17060d;
+}
+
+.redzone-hero-banner-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  opacity: 0;
+  transform: scale(1);
+  transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 7s ease-out;
+  pointer-events: none;
+}
+
+.redzone-hero-banner-slide.active {
+  opacity: 1;
+  transform: scale(1.05);
+  pointer-events: auto;
+}
+
+.redzone-hero-banner-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.redzone-hero-banner-content {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  z-index: 10;
+  padding: 0 20px;
+}
+
+.redzone-banner-brand {
+  color: #E50914;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9));
+}
+
+.redzone-banner-title {
+  font-size: clamp(26px, 6.5vw, 46px);
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  color: #ffffff;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.95);
+  font-family: "Cinzel", "Playfair Display", Georgia, serif, system-ui;
+}
+
+.redzone-banner-subtitle {
+  font-size: clamp(13px, 3.2vw, 15px);
+  font-weight: 500;
+  color: #f0f0f0;
+  margin: 0 0 14px 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
+}
+
+.redzone-banner-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.redzone-banner-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.redzone-banner-dot.active {
+  background: #E50914;
+  width: 20px;
+  border-radius: 4px;
+}
+
+/* ── Profiles Selection Section ── */
+.redzone-profiles-section {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 20px 48px;
+  z-index: 20;
   box-sizing: border-box;
 }
 
-.redzone-profile-header {
-  position: absolute;
-  top: 32px;
-  left: 4%;
-}
-
-.redzone-profile-main {
-  max-width: 900px;
-  width: 100%;
-  text-align: center;
-  margin: auto;
-}
-
-.redzone-profile-title {
-  font-size: clamp(30px, 4.5vw, 56px);
+.redzone-choose-title {
+  font-size: 15px;
   font-weight: 500;
-  margin-bottom: 48px;
-  letter-spacing: -0.5px;
+  color: #d2c8ce;
+  margin: 0 0 26px 0;
+  letter-spacing: 0.3px;
+  text-align: center;
 }
 
-.redzone-profile-grid {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: clamp(16px, 3.5vw, 40px);
-  flex-wrap: wrap;
-  margin-bottom: 56px;
+.redzone-profiles-grid-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(16px, 4.5vw, 28px);
+  width: 100%;
+  justify-items: center;
+  align-items: start;
 }
 
-.redzone-profile-item {
+.redzone-profile-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  width: clamp(100px, 13vw, 150px);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.redzone-profile-item:hover {
-  transform: scale(1.06);
-}
-
-.redzone-profile-item:hover .redzone-profile-name {
-  color: #ffffff;
-}
-
-.redzone-profile-item:hover .redzone-profile-avatar-box {
-  border-color: #ffffff;
-}
-
-.redzone-profile-avatar-box {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px solid transparent;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  position: relative;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  overflow: hidden;
-}
-
-.redzone-profile-avatar-symbol {
-  font-size: clamp(38px, 5.5vw, 60px);
+  text-align: center;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
 
-.redzone-profile-edit-overlay {
+.redzone-profile-card:hover {
+  transform: scale(1.06);
+}
+
+.redzone-profile-avatar-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.redzone-profile-card-avatar {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.redzone-profile-card:hover .redzone-profile-card-avatar {
+  border-color: #ffffff;
+  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+}
+
+.redzone-profile-edit-badge {
   position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  bottom: -4px;
+  right: -4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2.5px solid #14080e;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+.redzone-profile-edit-badge svg {
+  stroke: #14080e !important;
+}
+
+.redzone-profile-card-name {
+  margin-top: 10px;
+  font-size: clamp(13px, 3.4vw, 15px);
+  font-weight: 500;
   color: #ffffff;
-}
-
-.redzone-profile-kids-badge {
-  position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #ffaa00;
-  color: #000000;
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 3px;
-  letter-spacing: 0.5px;
-}
-
-.redzone-profile-name {
-  margin-top: 14px;
-  font-size: 16px;
-  color: #808080;
-  font-weight: 400;
-  transition: color 0.2s ease;
+  max-width: 90px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
+  letter-spacing: 0.2px;
 }
 
-.redzone-profile-add-box {
-  background-color: transparent !important;
-  border: 2px dashed #808080 !important;
-  color: #808080;
-}
-
-.redzone-profile-add-item:hover .redzone-profile-add-box {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-  border-color: #ffffff !important;
-  color: #ffffff;
-}
-
-.redzone-profile-actions {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-}
-
-.redzone-profile-manage-btn {
-  background: transparent;
-  color: #808080;
-  border: 1px solid #808080;
-  padding: 10px 28px;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.redzone-profile-manage-btn:hover,
-.redzone-profile-manage-btn.active {
-  color: #ffffff;
-  border-color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   CREATE / EDIT PROFILE MODAL
-   ══════════════════════════════════════════════════════════════════════════ */
-.redzone-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: rgba(0, 0, 0, 0.85);
+.redzone-profile-action-box {
+  width: 92px;
+  height: 92px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.redzone-profile-card:hover .redzone-profile-action-box,
+.redzone-profile-action-box.active {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #ffffff;
+}
+
+/* ── Add / Edit Profile Modal (Exact Match to IMG_2831.png) ── */
+.redzone-modal-backdrop-v2 {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(14px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
   animation: fadeIn 0.2s ease-out;
 }
 
-.redzone-profile-form-modal {
-  background: #181818;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+.redzone-add-profile-modal {
   width: 100%;
-  max-width: 520px;
-  padding: 32px 36px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+  max-width: 440px;
+  min-height: 520px;
+  background: #121212;
+  border: 1px solid #282828;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
-.redzone-form-modal-title {
-  font-size: 28px;
+.redzone-modal-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.redzone-modal-btn-cancel {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 6px;
+  transition: opacity 0.15s ease;
+}
+
+.redzone-modal-btn-cancel:hover {
+  opacity: 0.75;
+}
+
+.redzone-modal-screen-title {
+  font-size: 17px;
   font-weight: 700;
-  margin: 0 0 8px 0;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.redzone-modal-btn-save {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.redzone-modal-btn-save.ready {
   color: #ffffff;
 }
 
-.redzone-form-modal-subtitle {
-  font-size: 14px;
-  color: #888888;
-  margin: 0 0 24px 0;
-  line-height: 1.5;
+.redzone-modal-btn-save.disabled {
+  color: #4a4a4a;
+  cursor: not-allowed;
 }
 
-.redzone-profile-form {
+.redzone-modal-body {
+  padding: 28px 24px 36px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-.redzone-avatar-section {
-  display: flex;
   align-items: center;
-  gap: 20px;
+  flex: 1;
 }
 
-.redzone-preview-avatar {
-  width: 74px;
-  height: 74px;
-  border-radius: 6px;
+.redzone-modal-avatar-center {
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: center;
+}
+
+.redzone-modal-avatar-relative {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.redzone-avatar-edit-pencil-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #121212;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  padding: 0;
 }
 
-.redzone-preview-avatar-icon {
-  font-size: 40px;
+.redzone-avatar-picker-sheet {
+  width: 100%;
+  background: #1a1a1a;
+  border: 1px solid #333333;
+  border-radius: 12px;
+  padding: 14px 12px;
+  margin-bottom: 24px;
+  box-sizing: border-box;
+  animation: fadeIn 0.15s ease-out;
 }
 
-.redzone-avatar-options {
-  flex: 1;
-  min-width: 0;
+.redzone-picker-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  text-align: center;
 }
 
-.redzone-avatar-picker-grid {
+.redzone-picker-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
-  max-height: 100px;
+  gap: 10px;
+  justify-content: center;
+  max-height: 140px;
   overflow-y: auto;
   padding: 4px;
 }
 
-.redzone-avatar-option-btn {
-  background: #2a2a2a;
+.redzone-picker-avatar-btn {
+  background: none;
   border: 2px solid transparent;
-  border-radius: 6px;
-  font-size: 22px;
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.redzone-avatar-option-btn:hover {
-  background: #3a3a3a;
-  transform: scale(1.1);
-}
-
-.redzone-avatar-option-btn.selected {
-  border-color: #E50914;
-  background: #333333;
-}
-
-.redzone-field-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #aaaaaa;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-}
-
-.redzone-color-picker-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-.redzone-color-dot {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid transparent;
+  padding: 2px;
+  border-radius: 12px;
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
-.redzone-color-dot:hover {
-  transform: scale(1.15);
+.redzone-picker-avatar-btn:hover {
+  transform: scale(1.1);
 }
 
-.redzone-color-dot.selected {
-  border-color: #ffffff;
-  transform: scale(1.15);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+.redzone-picker-avatar-btn.selected {
+  border-color: #E50914;
 }
 
-.redzone-input {
+.redzone-modal-input-group {
   width: 100%;
-  background: #262626;
-  border: 1px solid #444444;
-  border-radius: 4px;
-  padding: 12px 14px;
-  color: #ffffff;
-  font-size: 15px;
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.2s ease;
+  margin-bottom: 28px;
 }
 
-.redzone-input:focus {
-  border-color: #ffffff;
-}
-
-.redzone-input-error {
-  color: #ff5252;
-  font-size: 12px;
-  margin-top: 6px;
-}
-
-.redzone-kids-toggle-wrap {
-  background: #222222;
-  padding: 12px 16px;
-  border-radius: 6px;
+.redzone-profile-name-input {
+  width: 100%;
+  height: 52px;
+  background: #1c1c1e;
   border: 1px solid #333333;
+  border-radius: 12px;
+  padding: 0 18px;
+  font-size: 16px;
+  color: #ffffff;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
-.redzone-checkbox-label {
+.redzone-profile-name-input::placeholder {
+  color: #5f5f64;
+}
+
+.redzone-profile-name-input:focus {
+  border-color: #555555;
+  background-color: #242426;
+}
+
+/* ── iOS Toggle Switch for Kids Profile ── */
+.redzone-kids-profile-control {
+  width: 100%;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.redzone-kids-toggle-row {
+  margin-bottom: 12px;
+}
+
+.redzone-ios-toggle {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 32px;
   cursor: pointer;
 }
 
-.redzone-checkbox {
-  width: 18px;
-  height: 18px;
-  accent-color: #E50914;
-  margin-top: 2px;
-  cursor: pointer;
+.redzone-ios-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
-.redzone-checkbox-title {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #ffffff;
+.redzone-ios-slider {
+  position: absolute;
+  inset: 0;
+  background-color: #39393d;
+  border-radius: 32px;
+  transition: background-color 0.25s ease;
 }
 
-.redzone-checkbox-desc {
-  font-size: 12.5px;
-  color: #888888;
-  margin-top: 2px;
+.redzone-ios-slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
-.redzone-form-buttons {
-  display: flex;
-  gap: 12px;
-  margin-top: 10px;
-  flex-wrap: wrap;
+.redzone-ios-toggle input:checked + .redzone-ios-slider {
+  background-color: #ffffff;
 }
 
-.redzone-btn-primary {
-  background: #E50914;
-  color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  padding: 12px 24px;
-  font-size: 15px;
+.redzone-ios-toggle input:checked + .redzone-ios-slider:before {
+  transform: translateX(20px);
+  background-color: #121212;
+}
+
+.redzone-kids-title {
+  font-size: 16px;
   font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.redzone-btn-primary:hover {
-  background: #f40612;
-}
-
-.redzone-btn-secondary {
-  background: transparent;
-  color: #888888;
-  border: 1px solid #666666;
-  border-radius: 4px;
-  padding: 12px 20px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.redzone-btn-secondary:hover {
   color: #ffffff;
-  border-color: #ffffff;
+  margin-bottom: 6px;
 }
 
-.redzone-btn-danger {
+.redzone-kids-description {
+  font-size: 13px;
+  color: #888888;
+  line-height: 1.45;
+  max-width: 280px;
+}
+
+.redzone-modal-delete-wrap {
+  width: 100%;
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.redzone-btn-delete-profile {
   background: transparent;
-  color: #ff5252;
-  border: 1px solid rgba(255, 82, 82, 0.4);
-  border-radius: 4px;
-  padding: 12px 18px;
-  font-size: 15px;
+  color: #ff4d4f;
+  border: 1px solid rgba(255, 77, 79, 0.4);
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  margin-left: auto;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-.redzone-btn-danger:hover {
-  background: rgba(255, 82, 82, 0.15);
-  border-color: #ff5252;
+.redzone-btn-delete-profile:hover {
+  background: rgba(255, 77, 79, 0.15);
+  border-color: #ff4d4f;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
