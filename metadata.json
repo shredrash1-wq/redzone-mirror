@@ -1,6 +1,6 @@
 {
   "name": "REDZONE MIRROR",
-  "description": "Stream trending movies and TV series with an authentic Netflix-inspired interface, comprehensive search, and instant playback.",
+  "description": "Stream trending movies and TV series with comprehensive search, premium streaming servers, and instant playback.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
