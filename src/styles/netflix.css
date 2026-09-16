@@ -2520,6 +2520,208 @@ body {
   transform: translateY(-1px);
 }
 
+/* ── Compact Bottom Menu Popovers (Dubbed Audio & Servers) ── */
+.redzone-bottom-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.redzone-audio-active-glow {
+  background: rgba(229, 9, 20, 0.28) !important;
+  border-color: var(--netflix-red) !important;
+  color: #ff4d58 !important;
+  box-shadow: 0 0 14px rgba(229, 9, 20, 0.35) !important;
+}
+
+.redzone-bottom-popover-menu {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  width: 280px;
+  max-width: calc(100vw - 24px);
+  background: rgba(16, 16, 22, 0.94);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 0, 0, 0.5);
+  z-index: 100025;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: redzonePopoverUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes redzonePopoverUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.redzone-bottom-popover-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #999999;
+}
+
+.redzone-bottom-popover-close {
+  background: none;
+  border: none;
+  color: #888888;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.redzone-bottom-popover-close:hover {
+  color: #ffffff;
+}
+
+.redzone-bottom-popover-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.redzone-bottom-popover-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  min-height: 42px;
+}
+
+.redzone-bottom-popover-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.redzone-bottom-popover-item.active {
+  background: rgba(229, 9, 20, 0.25);
+  border-color: var(--netflix-red);
+  color: #ff525d;
+}
+
+.redzone-popover-item-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.redzone-popover-item-label {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.redzone-popover-item-sub {
+  font-size: 10.5px;
+  color: #999999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.redzone-bottom-popover-item.active .redzone-popover-item-sub {
+  color: #ffb3b8;
+}
+
+.redzone-popover-check {
+  color: var(--netflix-red);
+  font-size: 14px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.redzone-hindi-quick-mirrors {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: rgba(229, 9, 20, 0.12);
+  border: 1px solid rgba(229, 9, 20, 0.3);
+  border-radius: 9px;
+}
+
+.redzone-hindi-mirrors-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #ff4d58;
+  margin-bottom: 6px;
+}
+
+.redzone-hindi-mirrors-grid {
+  display: flex;
+  gap: 5px;
+}
+
+.redzone-hindi-mirror-btn {
+  flex: 1;
+  padding: 5px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.redzone-hindi-mirror-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.redzone-hindi-mirror-btn.active {
+  background: var(--netflix-red);
+  border-color: var(--netflix-red);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .redzone-btn-text-hide-mobile {
+    display: none;
+  }
+
+  .redzone-bottom-popover-menu {
+    position: fixed;
+    bottom: 74px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 100px);
+  }
+}
+
 /* ── Resume Notification Toast & Playback Bar ── */
 .redzone-resume-toast {
   position: absolute;

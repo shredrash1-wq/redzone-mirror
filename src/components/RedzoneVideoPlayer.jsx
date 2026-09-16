@@ -5,87 +5,48 @@ import { storage } from "../utils/storage";
 export const DUBBED_AUDIO_OPTIONS = [
   {
     id: "default",
-    label: "Original Audio",
-    subLabel: "Default Studio Track",
+    label: "Original",
+    subLabel: "Original Studio Audio / Sub",
     flag: "🌐",
     code: "default",
-  },
-  {
-    id: "hindi",
-    label: "Hindi Dubbed",
-    subLabel: "हिंदी डब • Bollywood / Dual Audio",
-    flag: "🇮🇳",
-    code: "hi",
-    preferredServer: "autoembed",
+    preferredServer: "videasy",
   },
   {
     id: "english",
-    label: "English Dub / Audio",
+    label: "English Dub",
     subLabel: "English Audio Track",
     flag: "🇺🇸",
     code: "en",
     preferredServer: "videasy",
   },
   {
-    id: "spanish",
-    label: "Spanish Dub",
-    subLabel: "Español Latino / Castellano",
-    flag: "🇪🇸",
-    code: "es",
+    id: "hindi",
+    label: "Hindi Dub",
+    subLabel: "हिंदी डब • Hindi Audio Track",
+    flag: "🇮🇳",
+    code: "hi",
     preferredServer: "autoembed",
-  },
-  {
-    id: "french",
-    label: "French Dub",
-    subLabel: "Français VF",
-    flag: "🇫🇷",
-    code: "fr",
-    preferredServer: "autoembed",
-  },
-  {
-    id: "german",
-    label: "German Dub",
-    subLabel: "Deutsch Synchron",
-    flag: "🇩🇪",
-    code: "de",
-    preferredServer: "autoembed",
-  },
-  {
-    id: "japanese",
-    label: "Japanese Audio",
-    subLabel: "日本語 • Anime Original",
-    flag: "🇯🇵",
-    code: "ja",
-    preferredServer: "autoembed",
-  },
-  {
-    id: "multi",
-    label: "Multi-Audio Mode",
-    subLabel: "All available dubs & audio tracks",
-    flag: "🎧",
-    code: "multi",
-    preferredServer: "multiembed",
   },
 ];
 
 const STREAMING_SERVERS = [
   {
     id: "videasy",
-    name: "Server 1",
+    name: "Server 1 (Fast HD)",
     label: "Server 1",
     quality: "1080p HD",
     tag: "Ultra HD • Fast",
     supportsDub: true,
     getMovieUrl: (id, langCode) => {
       let url = `https://player.videasy.to/movie/${id}?color=e50914`;
-      if (langCode && langCode !== "default" && langCode !== "en") {
+      if (langCode && langCode !== "default") {
         url += `&lang=${langCode}&audio=${langCode}&dub=1`;
       }
       return url;
     },
     getTvUrl: (id, s, e, langCode) => {
       let url = `https://player.videasy.to/tv/${id}/${s}/${e}?color=e50914`;
-      if (langCode && langCode !== "default" && langCode !== "en") {
+      if (langCode && langCode !== "default") {
         url += `&lang=${langCode}&audio=${langCode}&dub=1`;
       }
       return url;
@@ -93,7 +54,7 @@ const STREAMING_SERVERS = [
   },
   {
     id: "vidlink",
-    name: "Server 2",
+    name: "Server 2 (Multi-Sub)",
     label: "Server 2",
     quality: "4K / Multi-Audio",
     tag: "Multi-Audio • Dual Track",
@@ -115,99 +76,55 @@ const STREAMING_SERVERS = [
   },
   {
     id: "autoembed",
-    name: "Server 3 (Dubbed)",
+    name: "Server 3 (AutoEmbed - Hindi)",
     label: "Server 3",
     quality: "1080p Dubbed",
-    tag: "Hindi / Eng / Multi-Dub",
+    tag: "Hindi / Eng Dubbed",
     supportsDub: true,
     isDubbedPrimary: true,
     getMovieUrl: (id, langCode) => {
       const code = langCode && langCode !== "default" ? langCode : "hi";
-      return `https://player.autoembed.cc/embed/movie/${id}?lang=${code}&dub=1&audio=${code}`;
+      return `https://player.autoembed.cc/embed/movie/${id}?lang=${code}&dub=1`;
     },
     getTvUrl: (id, s, e, langCode) => {
       const code = langCode && langCode !== "default" ? langCode : "hi";
-      return `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}?lang=${code}&dub=1&audio=${code}`;
+      return `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}?lang=${code}&dub=1`;
     },
   },
   {
     id: "multiembed",
-    name: "Server 4 (Hindi/Multi)",
+    name: "Server 4 (MultiEmbed - Hindi)",
     label: "Server 4",
     quality: "HD Multi-Audio",
-    tag: "Hindi Dubbed & Asian Audio",
+    tag: "Hindi Dubbed Server",
     supportsDub: true,
     isHindiPrimary: true,
-    getMovieUrl: (id, langCode) => {
-      let url = `https://multiembed.mov/?video_id=${id}&tmdb=1`;
+    getMovieUrl: (id, langCode, imdbId) => {
+      const vid = imdbId || id;
+      let url = `https://multiembed.mov/?video_id=${vid}${!imdbId ? "&tmdb=1" : ""}`;
       if (langCode === "hi" || langCode === "hindi") {
-        url += `&lang=hi&audio=hi&dub=1&server=hindi`;
+        url += `&server=hindi&lang=hi&dub=1`;
       }
       return url;
     },
-    getTvUrl: (id, s, e, langCode) => {
-      let url = `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`;
+    getTvUrl: (id, s, e, langCode, imdbId) => {
+      const vid = imdbId || id;
+      let url = `https://multiembed.mov/?video_id=${vid}${!imdbId ? "&tmdb=1" : ""}&s=${s}&e=${e}`;
       if (langCode === "hi" || langCode === "hindi") {
-        url += `&lang=hi&audio=hi&dub=1&server=hindi`;
+        url += `&server=hindi&lang=hi&dub=1`;
       }
-      return url;
-    },
-  },
-  {
-    id: "vidsrc_icu",
-    name: "Server 5",
-    label: "Server 5",
-    quality: "1080p",
-    tag: "Stable Stream",
-    supportsDub: false,
-    getMovieUrl: (id, langCode) => {
-      let url = `https://vidsrc.icu/embed/movie/${id}`;
-      if (langCode && langCode !== "default") url += `?ds_lang=${langCode}`;
-      return url;
-    },
-    getTvUrl: (id, s, e, langCode) => {
-      let url = `https://vidsrc.icu/embed/tv/${id}/${s}/${e}`;
-      if (langCode && langCode !== "default") url += `?ds_lang=${langCode}`;
       return url;
     },
   },
   {
     id: "smashy",
-    name: "Server 6",
-    label: "Server 6",
-    quality: "HD Stream",
-    tag: "Multi-Mirror",
+    name: "Server 5 (SmashyStream)",
+    label: "Server 5",
+    quality: "HD Dual Audio",
+    tag: "Multi-Audio Mirror",
     supportsDub: true,
     getMovieUrl: (id) => `https://embed.smashystream.com/playere.php?tmdb=${id}`,
     getTvUrl: (id, s, e) => `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`,
-  },
-  {
-    id: "twoembed",
-    name: "Server 7",
-    label: "Server 7",
-    quality: "HD 720p/1080p",
-    tag: "Backup Mirror",
-    supportsDub: false,
-    getMovieUrl: (id) => `https://www.2embed.cc/embed/${id}`,
-    getTvUrl: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
-  },
-  {
-    id: "vidking",
-    name: "Server 8",
-    label: "Server 8",
-    quality: "Direct HD",
-    tag: "Direct Source",
-    supportsDub: false,
-    getMovieUrl: (id, langCode) => {
-      let url = `https://www.vidking.net/embed/movie/${id}?autoPlay=true&color=e50914`;
-      if (langCode && langCode !== "default") url += `&lang=${langCode}`;
-      return url;
-    },
-    getTvUrl: (id, s, e, langCode) => {
-      let url = `https://www.vidking.net/embed/tv/${id}/${s}/${e}?autoPlay=true&color=e50914`;
-      if (langCode && langCode !== "default") url += `&lang=${langCode}`;
-      return url;
-    },
   },
 ];
 
@@ -244,9 +161,8 @@ export default function RedzoneVideoPlayer({
   const [serverId, setServerId] = useState(() => storage.get("redzone_preferred_server") || "videasy");
   const [showControls, setShowControls] = useState(true);
   const [showServerMenu, setShowServerMenu] = useState(false);
+  const [showAudioMenu, setShowAudioMenu] = useState(false);
   const [showEpisodesDrawer, setShowEpisodesDrawer] = useState(false);
-  const [showQuickSettings, setShowQuickSettings] = useState(false);
-  const [quickSettingsTab, setQuickSettingsTab] = useState("audio"); // 'audio' | 'quality' | 'captions'
   const [audioLang, setAudioLang] = useState(() => storage.get("redzone_preferred_audio_lang") || "default");
   const [audioToast, setAudioToast] = useState(null);
   const audioToastTimerRef = useRef(null);
@@ -257,6 +173,24 @@ export default function RedzoneVideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLandscapeLocked, setIsLandscapeLocked] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [imdbId, setImdbId] = useState(() => item?.imdb_id || null);
+
+  // Fetch IMDb external ID for reliable MultiEmbed/Smashy routing
+  useEffect(() => {
+    if (!itemId || !apiKey || imdbId) return;
+    let mounted = true;
+    const endpoint = isTV ? `/tv/${itemId}/external_ids` : `/movie/${itemId}/external_ids`;
+    tmdbFetch(endpoint, apiKey)
+      .then((data) => {
+        if (mounted && data?.imdb_id) {
+          setImdbId(data.imdb_id);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, [isTV, itemId, apiKey, imdbId]);
 
   const currentAudioOption = useMemo(() => {
     return DUBBED_AUDIO_OPTIONS.find((a) => a.id === audioLang) || DUBBED_AUDIO_OPTIONS[0];
@@ -267,13 +201,9 @@ export default function RedzoneVideoPlayer({
     storage.set("redzone_preferred_audio_lang", opt.id);
     setIframeLoading(true);
 
-    // Auto-switch to dedicated working server for dubbed / multi audio
+    // Auto-switch to dedicated working server for dubbed audio
     if (opt.id === "hindi") {
-      const targetServer = (serverId === "multiembed" || serverId === "autoembed") ? serverId : "multiembed";
-      setServerId(targetServer);
-      storage.set("redzone_preferred_server", targetServer);
-    } else if (opt.id === "multi") {
-      const targetServer = (serverId === "multiembed" || serverId === "vidlink") ? serverId : "multiembed";
+      const targetServer = (serverId === "autoembed" || serverId === "multiembed" || serverId === "smashy") ? serverId : "autoembed";
       setServerId(targetServer);
       storage.set("redzone_preferred_server", targetServer);
     } else if (opt.id === "english") {
@@ -282,7 +212,7 @@ export default function RedzoneVideoPlayer({
         storage.set("redzone_preferred_server", "videasy");
       }
     } else if (opt.id === "default") {
-      if (serverId === "multiembed" || serverId === "autoembed") {
+      if (serverId === "multiembed") {
         setServerId("videasy");
         storage.set("redzone_preferred_server", "videasy");
       }
@@ -290,13 +220,13 @@ export default function RedzoneVideoPlayer({
 
     setAudioToast({
       title: opt.label,
-      desc: opt.id === "hindi" ? "🇮🇳 Switched to Hindi Dubbed Server (MultiEmbed)" : opt.subLabel,
+      desc: opt.id === "hindi" ? "🇮🇳 Hindi Dubbed Track Active" : opt.id === "english" ? "🇺🇸 English Dubbed Track Active" : "🌐 Original Studio Audio Active",
       flag: opt.flag,
     });
     clearTimeout(audioToastTimerRef.current);
     audioToastTimerRef.current = setTimeout(() => {
       setAudioToast(null);
-    }, 4000);
+    }, 3500);
   };
 
   // ── Playback Progress & Exact Minute/Second Tracking ──
@@ -325,6 +255,7 @@ export default function RedzoneVideoPlayer({
   const iframeRef = useRef(null);
   const hideTimerRef = useRef(null);
   const serverMenuRef = useRef(null);
+  const audioMenuRef = useRef(null);
   const toastTimerRef = useRef(null);
 
   // Read saved progress on mount or episode change
@@ -631,16 +562,16 @@ export default function RedzoneVideoPlayer({
     }
   }, [itemId, isTV, season, episode, mediaType, item, onRecordHistory]);
 
-  // Auto-hide controls after 4s inactivity
+  // Auto-hide controls after 4.5s inactivity
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
     clearTimeout(hideTimerRef.current);
     hideTimerRef.current = setTimeout(() => {
-      if (!showServerMenu && !showEpisodesDrawer) {
+      if (!showServerMenu && !showAudioMenu && !showEpisodesDrawer) {
         setShowControls(false);
       }
     }, 4500);
-  }, [showServerMenu, showEpisodesDrawer]);
+  }, [showServerMenu, showAudioMenu, showEpisodesDrawer]);
 
   useEffect(() => {
     resetHideTimer();
@@ -655,6 +586,8 @@ export default function RedzoneVideoPlayer({
           setShowEpisodesDrawer(false);
         } else if (showServerMenu) {
           setShowServerMenu(false);
+        } else if (showAudioMenu) {
+          setShowAudioMenu(false);
         } else {
           onClose();
         }
@@ -670,13 +603,16 @@ export default function RedzoneVideoPlayer({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, showEpisodesDrawer, showServerMenu, resetHideTimer]);
+  }, [onClose, showEpisodesDrawer, showServerMenu, showAudioMenu, resetHideTimer]);
 
-  // Click outside server menu
+  // Click outside server menu or audio menu
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (serverMenuRef.current && !serverMenuRef.current.contains(e.target)) {
         setShowServerMenu(false);
+      }
+      if (audioMenuRef.current && !audioMenuRef.current.contains(e.target)) {
+        setShowAudioMenu(false);
       }
     };
     window.addEventListener("mousedown", handleClickOutside);
@@ -720,17 +656,25 @@ export default function RedzoneVideoPlayer({
     setIframeLoading(true);
     const langCode = currentAudioOption.code;
     let base = isTV
-      ? currentServer.getTvUrl(itemId, season, episode, langCode)
-      : currentServer.getMovieUrl(itemId, langCode);
+      ? currentServer.getTvUrl(itemId, season, episode, langCode, imdbId)
+      : currentServer.getMovieUrl(itemId, langCode, imdbId);
 
     // If Dubbed / Audio language is active, ensure proper dub parameters are in the query string
     if (audioLang !== "default") {
       if (audioLang === "hindi") {
-        if (!base.includes("lang=")) base += `${base.includes("?") ? "&" : "?"}lang=hi&audio=hi&dub=1&server=hindi`;
-      } else if (audioLang === "multi") {
-        if (!base.includes("multi=")) base += `${base.includes("?") ? "&" : "?"}multi=1&dub=1`;
-      } else if (langCode && langCode !== "default") {
-        if (!base.includes("lang=")) base += `${base.includes("?") ? "&" : "?"}lang=${langCode}&audio=${langCode}&dub=1`;
+        if (serverId === "multiembed") {
+          if (!base.includes("server=hindi")) base += `${base.includes("?") ? "&" : "?"}server=hindi&lang=hi`;
+        } else if (serverId === "autoembed") {
+          if (!base.includes("lang=hi")) base += `${base.includes("?") ? "&" : "?"}lang=hi&dub=1`;
+        } else if (serverId === "videasy" || serverId === "vidlink") {
+          if (!base.includes("lang=")) base += `${base.includes("?") ? "&" : "?"}lang=hi&audio=hi&dub=1`;
+        }
+      } else if (audioLang === "english") {
+        if (serverId === "autoembed") {
+          if (!base.includes("lang=en")) base += `${base.includes("?") ? "&" : "?"}lang=en&dub=1`;
+        } else if (serverId === "videasy" || serverId === "vidlink") {
+          if (!base.includes("dub=")) base += `${base.includes("?") ? "&" : "?"}lang=en&audio=en&dub=1`;
+        }
       }
     }
 
@@ -744,7 +688,7 @@ export default function RedzoneVideoPlayer({
       }
     }
     return base;
-  }, [currentServer, itemId, isTV, season, episode, startOffset, currentAudioOption, audioLang]);
+  }, [currentServer, itemId, isTV, season, episode, startOffset, currentAudioOption, audioLang, imdbId, serverId]);
 
   const currentEpisodeObj = useMemo(() => {
     return seasonEpisodes.find((e) => e.episode_number === episode);
@@ -876,314 +820,7 @@ export default function RedzoneVideoPlayer({
         />
       </div>
 
-      {/* Small Floating Pill on Desktop / Tablet */}
-      <div className="redzone-floating-quick-wrap">
-        <div
-          className="redzone-floating-quick-pill redzone-liquid-glass-pill"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Audio / Dubbed Quick Button */}
-          <button
-            type="button"
-            className={`redzone-floating-quick-btn ${showQuickSettings && quickSettingsTab === "audio" ? "active" : ""} ${audioLang !== "default" ? "redzone-audio-active-glow" : ""}`}
-            onClick={() => {
-              if (showQuickSettings && quickSettingsTab === "audio") {
-                setShowQuickSettings(false);
-              } else {
-                setQuickSettingsTab("audio");
-                setShowQuickSettings(true);
-              }
-            }}
-            title="Audio & Dubbed Track (Hindi, English, etc.)"
-            aria-label="Audio and Dubbing Settings"
-          >
-            <span style={{ fontSize: "12px" }}>{currentAudioOption.flag}</span>
-            <span>{audioLang === "hindi" ? "Hindi Dub" : `${currentAudioOption.label.split(" ")[0]} Dub`}</span>
-          </button>
-
-          <span className="redzone-floating-quick-divider" />
-
-          {/* Quality Quick Button */}
-          <button
-            type="button"
-            className={`redzone-floating-quick-btn ${showQuickSettings && quickSettingsTab === "quality" ? "active" : ""}`}
-            onClick={() => {
-              if (showQuickSettings && quickSettingsTab === "quality") {
-                setShowQuickSettings(false);
-              } else {
-                setQuickSettingsTab("quality");
-                setShowQuickSettings(true);
-              }
-            }}
-            title="Change Quality / Server"
-            aria-label="Quality Settings"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            <span>{currentServer.quality.split("/")[0].trim()}</span>
-          </button>
-
-          <span className="redzone-floating-quick-divider" />
-
-          {/* Captions Quick Button */}
-          <button
-            type="button"
-            className={`redzone-floating-quick-btn ${showQuickSettings && quickSettingsTab === "captions" ? "active" : ""}`}
-            onClick={() => {
-              if (showQuickSettings && quickSettingsTab === "captions") {
-                setShowQuickSettings(false);
-              } else {
-                setQuickSettingsTab("captions");
-                setShowQuickSettings(true);
-              }
-            }}
-            title="Subtitles & Captions"
-            aria-label="Captions Settings"
-          >
-            <span className="redzone-cc-icon-pill">CC</span>
-            <span>Captions</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Modern Responsive Quick Settings Modal / Phone Sheet */}
-      {showQuickSettings && (
-        <div
-          className="redzone-quick-modal-backdrop"
-          onClick={() => setShowQuickSettings(false)}
-        >
-          <div
-            className="redzone-quick-settings-popover redzone-liquid-glass-card"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Mobile Drag Pill */}
-            <div className="redzone-quick-drag-indicator" />
-
-            {/* Modal Header */}
-            <div className="redzone-quick-modal-header">
-              <div className="redzone-quick-modal-header-left">
-                <span className="redzone-quick-modal-icon">
-                  {quickSettingsTab === "audio" ? "🔊" : quickSettingsTab === "quality" ? "⚡" : "💬"}
-                </span>
-                <div>
-                  <div className="redzone-quick-modal-title">
-                    {quickSettingsTab === "audio" ? "Audio & Dubbed Languages" : quickSettingsTab === "quality" ? "Streaming Servers" : "Subtitles & CC"}
-                  </div>
-                  <div className="redzone-quick-modal-subtitle">
-                    {quickSettingsTab === "audio"
-                      ? `${currentAudioOption.flag} ${currentAudioOption.label}`
-                      : `${currentServer.name} • ${currentServer.quality}`}
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="redzone-quick-popover-close"
-                onClick={() => setShowQuickSettings(false)}
-                aria-label="Close"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Modal Tabs */}
-            <div className="redzone-quick-popover-tabs">
-              <button
-                type="button"
-                className={`redzone-quick-tab ${quickSettingsTab === "audio" ? "active" : ""}`}
-                onClick={() => setQuickSettingsTab("audio")}
-              >
-                🔊 Audio / Dub
-              </button>
-              <button
-                type="button"
-                className={`redzone-quick-tab ${quickSettingsTab === "quality" ? "active" : ""}`}
-                onClick={() => setQuickSettingsTab("quality")}
-              >
-                ⚡ Servers
-              </button>
-              <button
-                type="button"
-                className={`redzone-quick-tab ${quickSettingsTab === "captions" ? "active" : ""}`}
-                onClick={() => setQuickSettingsTab("captions")}
-              >
-                💬 CC
-              </button>
-            </div>
-
-            {/* Audio / Dubbed Track Selector Content */}
-            {quickSettingsTab === "audio" && (
-              <div className="redzone-quick-tab-body">
-                <div className="redzone-quick-section-title">Select Language Audio Track:</div>
-                <div className="redzone-quick-options-list">
-                  {DUBBED_AUDIO_OPTIONS.map((opt) => {
-                    const isCurrent = opt.id === audioLang;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        className={`redzone-quick-opt-row ${isCurrent ? "active" : ""}`}
-                        onClick={() => handleSelectAudioLang(opt)}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: "9px", textAlign: "left", flex: 1, minWidth: 0 }}>
-                          <span style={{ fontSize: "18px", flexShrink: 0 }}>{opt.flag}</span>
-                          <div style={{ minWidth: 0, overflow: "hidden" }}>
-                            <div style={{ fontWeight: 700, fontSize: "12px", color: isCurrent ? "#ffffff" : "#e5e5e5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                              {opt.label}
-                            </div>
-                            <div style={{ fontSize: "10px", color: isCurrent ? "#ffb3b8" : "#8c8c8c", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                              {opt.subLabel}
-                            </div>
-                          </div>
-                        </div>
-                        {isCurrent && <span className="redzone-quick-opt-check">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Instant 1-tap Dubbed Audio Mirrors */}
-                <div style={{ marginTop: "10px", padding: "10px", background: "rgba(229, 9, 20, 0.12)", borderRadius: "10px", border: "1px solid rgba(229, 9, 20, 0.3)" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "700", color: "#ff4d58", marginBottom: "6px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span>⚡ Dubbed Audio Mirrors</span>
-                    <span style={{ fontSize: "10px", color: "#a3a3a3", fontWeight: "500" }}>Active: {currentServer.name}</span>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-                    <button
-                      type="button"
-                      className={`redzone-quick-fast-srv-btn ${serverId === "multiembed" ? "active" : ""}`}
-                      onClick={() => {
-                        setServerId("multiembed");
-                        storage.set("redzone_preferred_server", "multiembed");
-                        setIframeLoading(true);
-                      }}
-                    >
-                      🇮🇳 Mirror 1 (MultiEmbed)
-                    </button>
-                    <button
-                      type="button"
-                      className={`redzone-quick-fast-srv-btn ${serverId === "autoembed" ? "active" : ""}`}
-                      onClick={() => {
-                        setServerId("autoembed");
-                        storage.set("redzone_preferred_server", "autoembed");
-                        setIframeLoading(true);
-                      }}
-                    >
-                      ⚡ Mirror 2 (AutoEmbed)
-                    </button>
-                    <button
-                      type="button"
-                      className={`redzone-quick-fast-srv-btn ${serverId === "vidlink" ? "active" : ""}`}
-                      onClick={() => {
-                        setServerId("vidlink");
-                        storage.set("redzone_preferred_server", "vidlink");
-                        setIframeLoading(true);
-                      }}
-                    >
-                      🎧 Mirror 3 (VidLink Dual)
-                    </button>
-                    <button
-                      type="button"
-                      className={`redzone-quick-fast-srv-btn ${serverId === "smashy" ? "active" : ""}`}
-                      onClick={() => {
-                        setServerId("smashy");
-                        storage.set("redzone_preferred_server", "smashy");
-                        setIframeLoading(true);
-                      }}
-                    >
-                      🌐 Mirror 4 (SmashyStream)
-                    </button>
-                  </div>
-                  <div style={{ fontSize: "10px", color: "#a3a3a3", marginTop: "6px", lineHeight: "1.3" }}>
-                    💡 Tip: If video plays in English, tap <strong>Mirror 1</strong> or <strong>Mirror 2</strong>, or switch audio track inside the player controls.
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Quality Selector Content */}
-            {quickSettingsTab === "quality" && (
-              <div className="redzone-quick-tab-body">
-                <div className="redzone-quick-section-title">Stream Resolution & Server:</div>
-                <div className="redzone-quick-options-list">
-                  {STREAMING_SERVERS.map((srv) => {
-                    const isCurrent = srv.id === serverId;
-                    return (
-                      <button
-                        key={srv.id}
-                        type="button"
-                        className={`redzone-quick-opt-row ${isCurrent ? "active" : ""}`}
-                        onClick={() => {
-                          setServerId(srv.id);
-                          storage.set("redzone_preferred_server", srv.id);
-                          setIframeLoading(true);
-                          setShowQuickSettings(false);
-                        }}
-                      >
-                        <span className="redzone-quick-opt-name">{srv.name}</span>
-                        <span className="redzone-quick-opt-badge">{srv.quality}</span>
-                        {isCurrent && <span className="redzone-quick-opt-check">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Captions Content */}
-            {quickSettingsTab === "captions" && (
-              <div className="redzone-quick-tab-body">
-                <div className="redzone-quick-section-title">Subtitles / Captions:</div>
-                <div className="redzone-quick-caption-banner">
-                  <div className="redzone-caption-badge">Multi-Language Subtitles</div>
-                  <p className="redzone-caption-desc">
-                    Server 2 (VidLink) & Server 1 provide built-in subtitles in 35+ languages.
-                  </p>
-                </div>
-
-                <div className="redzone-quick-options-list">
-                  <button
-                    type="button"
-                    className={`redzone-quick-opt-row ${serverId === "vidlink" ? "active" : ""}`}
-                    onClick={() => {
-                      setServerId("vidlink");
-                      storage.set("redzone_preferred_server", "vidlink");
-                      setIframeLoading(true);
-                      setShowQuickSettings(false);
-                    }}
-                  >
-                    <span className="redzone-quick-opt-name">Server 2 (Multi-Sub)</span>
-                    <span className="redzone-quick-opt-badge">40+ Languages</span>
-                    {serverId === "vidlink" && <span className="redzone-quick-opt-check">✓</span>}
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`redzone-quick-opt-row ${serverId === "videasy" ? "active" : ""}`}
-                    onClick={() => {
-                      setServerId("videasy");
-                      storage.set("redzone_preferred_server", "videasy");
-                      setIframeLoading(true);
-                      setShowQuickSettings(false);
-                    }}
-                  >
-                    <span className="redzone-quick-opt-name">Server 1 (English/Auto)</span>
-                    <span className="redzone-quick-opt-badge">Auto Subs</span>
-                    {serverId === "videasy" && <span className="redzone-quick-opt-check">✓</span>}
-                  </button>
-                </div>
-
-                <div className="redzone-quick-tip">
-                  Tip: Tap the <strong>CC</strong> icon in the player interface to turn subtitles on or off and choose language.
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Persistent Liquid Glass Floating Controls Button */}
+      {/* Floating Trigger to restore controls if hidden */}
       <button
         type="button"
         className={`redzone-player-floating-trigger redzone-liquid-glass-btn ${showControls ? "hidden" : ""}`}
@@ -1191,17 +828,17 @@ export default function RedzoneVideoPlayer({
           e.stopPropagation();
           setShowControls(true);
         }}
-        title="Show Player Controls & Servers"
+        title="Show Controls"
         aria-label="Show Controls"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
         <span>Controls</span>
       </button>
 
-      {/* Top Liquid Glass Floating Header Bar */}
+      {/* Top Header Bar - Clean and streamlined without overflowing menus */}
       <header
         className={`redzone-player-topbar redzone-liquid-glass-topbar ${showControls ? "redzone-player-topbar--visible" : ""}`}
         onClick={(e) => e.stopPropagation()}
@@ -1238,74 +875,7 @@ export default function RedzoneVideoPlayer({
         </div>
 
         <div className="redzone-player-topbar-right">
-          {/* Audio / Dubbed Switcher Pill */}
-          <button
-            type="button"
-            className={`redzone-player-control-btn redzone-liquid-glass-btn ${audioLang !== "default" ? "redzone-audio-active-glow" : ""}`}
-            onClick={() => {
-              setQuickSettingsTab("audio");
-              setShowQuickSettings((prev) => (showQuickSettings && quickSettingsTab === "audio" ? false : true));
-            }}
-            title="Audio & Dubbed Languages (Hindi, English, etc.)"
-            aria-label="Audio & Dubbed Languages"
-          >
-            <span style={{ fontSize: "14px" }}>{currentAudioOption.flag}</span>
-            <span className="redzone-audio-current-label">
-              {audioLang === "hindi" ? "Hindi Dub" : currentAudioOption.label.split(" ")[0]}
-            </span>
-          </button>
-
-          {/* Server Switcher Dropdown */}
-          <div className="redzone-server-dropdown-wrap" ref={serverMenuRef}>
-            <button
-              type="button"
-              className={`redzone-player-control-btn redzone-liquid-glass-btn ${showServerMenu ? "active" : ""}`}
-              onClick={() => setShowServerMenu((prev) => !prev)}
-              title="Change Streaming Server & Quality"
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
-                <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
-                <line x1="6" y1="6" x2="6.01" y2="6" />
-                <line x1="6" y1="18" x2="6.01" y2="18" />
-              </svg>
-              <span className="redzone-server-current-label">
-                {currentServer.name}
-              </span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-
-            {showServerMenu && (
-              <div className="redzone-server-dropdown-menu redzone-liquid-glass-panel">
-                <div className="redzone-server-menu-title">Select Server & Quality</div>
-                <div className="redzone-server-menu-scroll">
-                  {STREAMING_SERVERS.map((srv) => (
-                    <button
-                      key={srv.id}
-                      type="button"
-                      className={`redzone-server-menu-item redzone-liquid-menu-item ${srv.id === serverId ? "active" : ""}`}
-                      onClick={() => {
-                        setServerId(srv.id);
-                        storage.set("redzone_preferred_server", srv.id);
-                        setShowServerMenu(false);
-                        setIframeLoading(true);
-                      }}
-                    >
-                      <div className="redzone-server-item-left">
-                        <span className="redzone-server-item-label">{srv.name}</span>
-                        <span className="redzone-server-item-tag">{srv.quality} • {srv.tag}</span>
-                      </div>
-                      {srv.id === serverId && <span className="redzone-server-active-check">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Refresh/Reload stream button */}
+          {/* Reload stream button */}
           <button
             type="button"
             className="redzone-player-control-btn redzone-player-control-btn--icon redzone-liquid-glass-btn"
@@ -1320,7 +890,7 @@ export default function RedzoneVideoPlayer({
             </svg>
           </button>
 
-          {/* TV Episodes Drawer Button */}
+          {/* TV Episodes Drawer Button (if TV) */}
           {isTV && (
             <button
               type="button"
@@ -1341,12 +911,12 @@ export default function RedzoneVideoPlayer({
             </button>
           )}
 
-          {/* Screen Orientation / Auto-Rotate on Mobile */}
+          {/* Screen Orientation on Mobile */}
           <button
             type="button"
             className="redzone-player-control-btn redzone-player-control-btn--icon redzone-liquid-glass-btn redzone-phone-rotate-btn"
             onClick={toggleOrientation}
-            title="Auto-Rotate / Fullscreen"
+            title="Auto-Rotate"
             aria-label="Rotate screen"
           >
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1355,26 +925,7 @@ export default function RedzoneVideoPlayer({
             </svg>
           </button>
 
-          {/* Fullscreen Button */}
-          <button
-            type="button"
-            className={`redzone-player-control-btn redzone-player-control-btn--icon redzone-liquid-glass-btn ${isFullscreen ? "active" : ""}`}
-            onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen Mode (F)"}
-            aria-label="Toggle Fullscreen"
-          >
-            {isFullscreen ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-              </svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-              </svg>
-            )}
-          </button>
-
-          {/* Close X Button */}
+          {/* Close button */}
           <button
             type="button"
             className="redzone-player-control-btn redzone-player-control-btn--icon redzone-player-close-btn redzone-liquid-glass-btn"
@@ -1390,7 +941,7 @@ export default function RedzoneVideoPlayer({
         </div>
       </header>
 
-      {/* Bottom Floating Liquid Glass Action Bar */}
+      {/* Bottom Floating Control Bar - Only 1-2 useful options in down */}
       <footer
         className={`redzone-player-bottombar redzone-liquid-glass-bottombar ${showControls ? "visible" : ""}`}
         onClick={(e) => e.stopPropagation()}
@@ -1418,56 +969,190 @@ export default function RedzoneVideoPlayer({
         </div>
 
         <div className="redzone-player-bottombar-left">
-          {/* Quality & Stream Specs Indicator */}
-          <div className="redzone-bottom-quality-group">
-            <span className="redzone-quality-pill redzone-liquid-badge">
-              {currentServer.quality}
-            </span>
-            <span
-              className="redzone-quality-pill redzone-liquid-badge redzone-audio-pill"
-              onClick={() => {
-                setQuickSettingsTab("audio");
-                setShowQuickSettings(true);
-              }}
-              title="Click to switch Dubbed / Audio language"
-              style={{ cursor: "pointer" }}
-            >
-              {currentAudioOption.flag} {audioLang === "hindi" ? "Hindi Dub" : currentAudioOption.label.split(" ")[0]}
-            </span>
-            <div className="redzone-bottom-specs-text">
-              <span className="redzone-bottom-server-title">{currentServer.name}</span>
-              <span className="redzone-bottom-specs-dot">•</span>
-              <span className="redzone-bottom-tag-label">{currentServer.tag}</span>
-            </div>
-          </div>
-
           {/* Time readout */}
           <div className="redzone-player-time-display">
             <span className="redzone-player-time-current">{formatTime(currentTime)}</span>
             <span className="redzone-player-time-sep">/</span>
             <span className="redzone-player-time-total">{formatTime(duration)}</span>
           </div>
+
+          {/* Option 1: Dubbed Audio Selection (Original, Hindi, English only) */}
+          <div className="redzone-bottom-menu-wrap" ref={audioMenuRef}>
+            <button
+              type="button"
+              className={`redzone-player-skip-btn redzone-liquid-glass-btn ${showAudioMenu ? "active" : ""} ${audioLang !== "default" ? "redzone-audio-active-glow" : ""}`}
+              onClick={() => {
+                setShowServerMenu(false);
+                setShowAudioMenu((prev) => !prev);
+              }}
+              title="Select Audio Track (Original, Hindi, English)"
+              aria-label="Dubbed Audio"
+            >
+              <span style={{ fontSize: "14px" }}>{currentAudioOption.flag}</span>
+              <span className="redzone-btn-text-hide-mobile">
+                {audioLang === "hindi" ? "Hindi Dub" : audioLang === "english" ? "English Dub" : "Original"}
+              </span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {showAudioMenu && (
+              <div className="redzone-bottom-popover-menu redzone-liquid-glass-panel">
+                <div className="redzone-bottom-popover-title">
+                  <span>Audio Track (3 Options)</span>
+                  <button
+                    type="button"
+                    className="redzone-bottom-popover-close"
+                    onClick={() => setShowAudioMenu(false)}
+                    aria-label="Close"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="redzone-bottom-popover-list">
+                  {DUBBED_AUDIO_OPTIONS.map((opt) => {
+                    const isCurrent = opt.id === audioLang;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        className={`redzone-bottom-popover-item ${isCurrent ? "active" : ""}`}
+                        onClick={() => {
+                          handleSelectAudioLang(opt);
+                          setShowAudioMenu(false);
+                        }}
+                      >
+                        <div className="redzone-popover-item-left">
+                          <span style={{ fontSize: "18px" }}>{opt.flag}</span>
+                          <div>
+                            <div className="redzone-popover-item-label">{opt.label}</div>
+                            <div className="redzone-popover-item-sub">{opt.subLabel}</div>
+                          </div>
+                        </div>
+                        {isCurrent && <span className="redzone-popover-check">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* If Hindi dub is chosen, quick 1-tap working mirrors */}
+                {audioLang === "hindi" && (
+                  <div className="redzone-hindi-quick-mirrors">
+                    <div className="redzone-hindi-mirrors-title">⚡ Hindi Stream Mirror:</div>
+                    <div className="redzone-hindi-mirrors-grid">
+                      <button
+                        type="button"
+                        className={`redzone-hindi-mirror-btn ${serverId === "autoembed" ? "active" : ""}`}
+                        onClick={() => {
+                          setServerId("autoembed");
+                          storage.set("redzone_preferred_server", "autoembed");
+                          setIframeLoading(true);
+                          setShowAudioMenu(false);
+                        }}
+                      >
+                        AutoEmbed (Fast)
+                      </button>
+                      <button
+                        type="button"
+                        className={`redzone-hindi-mirror-btn ${serverId === "multiembed" ? "active" : ""}`}
+                        onClick={() => {
+                          setServerId("multiembed");
+                          storage.set("redzone_preferred_server", "multiembed");
+                          setIframeLoading(true);
+                          setShowAudioMenu(false);
+                        }}
+                      >
+                        MultiEmbed (Hindi)
+                      </button>
+                      <button
+                        type="button"
+                        className={`redzone-hindi-mirror-btn ${serverId === "smashy" ? "active" : ""}`}
+                        onClick={() => {
+                          setServerId("smashy");
+                          storage.set("redzone_preferred_server", "smashy");
+                          setIframeLoading(true);
+                          setShowAudioMenu(false);
+                        }}
+                      >
+                        SmashyStream
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Option 2: Server Selection */}
+          <div className="redzone-bottom-menu-wrap" ref={serverMenuRef}>
+            <button
+              type="button"
+              className={`redzone-player-skip-btn redzone-liquid-glass-btn ${showServerMenu ? "active" : ""}`}
+              onClick={() => {
+                setShowAudioMenu(false);
+                setShowServerMenu((prev) => !prev);
+              }}
+              title="Change Server"
+              aria-label="Server"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+                <line x1="6" y1="6" x2="6.01" y2="6" />
+                <line x1="6" y1="18" x2="6.01" y2="18" />
+              </svg>
+              <span className="redzone-btn-text-hide-mobile">{currentServer.name}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {showServerMenu && (
+              <div className="redzone-bottom-popover-menu redzone-liquid-glass-panel">
+                <div className="redzone-bottom-popover-title">
+                  <span>Streaming Server</span>
+                  <button
+                    type="button"
+                    className="redzone-bottom-popover-close"
+                    onClick={() => setShowServerMenu(false)}
+                    aria-label="Close"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="redzone-bottom-popover-list">
+                  {STREAMING_SERVERS.map((srv) => {
+                    const isCurrent = srv.id === serverId;
+                    return (
+                      <button
+                        key={srv.id}
+                        type="button"
+                        className={`redzone-bottom-popover-item ${isCurrent ? "active" : ""}`}
+                        onClick={() => {
+                          setServerId(srv.id);
+                          storage.set("redzone_preferred_server", srv.id);
+                          setShowServerMenu(false);
+                          setIframeLoading(true);
+                        }}
+                      >
+                        <div className="redzone-popover-item-left">
+                          <div>
+                            <div className="redzone-popover-item-label">{srv.name}</div>
+                            <div className="redzone-popover-item-sub">{srv.quality} • {srv.tag}</div>
+                          </div>
+                        </div>
+                        {isCurrent && <span className="redzone-popover-check">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="redzone-player-bottombar-right">
-          {/* Audio / Dubbed Quick Button in Bottom Bar */}
-          <button
-            type="button"
-            className={`redzone-player-skip-btn redzone-liquid-glass-btn ${audioLang !== "default" ? "redzone-audio-active-glow" : ""}`}
-            onClick={() => {
-              setQuickSettingsTab("audio");
-              setShowQuickSettings(true);
-            }}
-            title="Audio & Dubbed Languages"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-            </svg>
-            <span>{audioLang === "hindi" ? "Hindi Dub" : "Dubbed Audio"}</span>
-          </button>
-
           {/* Previous Episode Button (TV) */}
           {isTV && hasPrevEpisode && (
             <button
@@ -1476,11 +1161,11 @@ export default function RedzoneVideoPlayer({
               onClick={handlePrevEpisode}
               title="Previous Episode"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <line x1="5" y1="5" x2="5" y2="19" stroke="currentColor" strokeWidth="3" />
                 <polygon points="19 20 9 12 19 4 19 20" />
               </svg>
-              <span>Prev Ep</span>
+              <span className="redzone-btn-text-hide-mobile">Prev</span>
             </button>
           )}
 
@@ -1492,8 +1177,8 @@ export default function RedzoneVideoPlayer({
               onClick={handleNextEpisode}
               title="Next Episode"
             >
-              <span>Next Ep</span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <span>Next</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 4 15 12 5 20 5 4" />
                 <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" strokeWidth="3" />
               </svg>
@@ -1509,19 +1194,13 @@ export default function RedzoneVideoPlayer({
             aria-label="Fullscreen"
           >
             {isFullscreen ? (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-                </svg>
-                <span>Exit Fullscreen</span>
-              </>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+              </svg>
             ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-                </svg>
-                <span>Fullscreen</span>
-              </>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+              </svg>
             )}
           </button>
         </div>
