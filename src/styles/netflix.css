@@ -1602,7 +1602,7 @@ body {
 /* Floating Small Quick Option for Quality & Captions */
 .redzone-floating-quick-wrap {
   position: absolute;
-  top: 18px;
+  top: 72px;
   left: 20px;
   z-index: 100009;
   display: flex;
@@ -1610,6 +1610,14 @@ body {
   align-items: flex-start;
   gap: 8px;
   pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .redzone-floating-quick-wrap {
+    top: auto;
+    bottom: 84px;
+    left: 14px;
+  }
 }
 
 .redzone-floating-quick-pill {
@@ -1675,24 +1683,48 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* Small Floating Quick Settings Popover */
+/* Full Modal Backdrop for Phone & Desktop Quick Settings / Dubbed Menu */
+.redzone-quick-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100030;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  animation: quickFadeIn 0.2s ease-out;
+  pointer-events: auto;
+}
+
+@keyframes quickFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Compact Responsive Dubbed & Quick Settings Popover Card */
 .redzone-quick-settings-popover {
-  width: 320px;
-  max-width: calc(100vw - 40px);
-  background: rgba(16, 16, 22, 0.94);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  width: 100%;
+  max-width: 380px;
+  max-height: min(520px, 84vh);
+  background: rgba(18, 18, 24, 0.96);
+  backdrop-filter: blur(32px) saturate(220%);
+  -webkit-backdrop-filter: blur(32px) saturate(220%);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
-  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.2), 0 16px 36px rgba(0, 0, 0, 0.75);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25), 0 20px 50px rgba(0, 0, 0, 0.85);
   overflow: hidden;
-  animation: quickPopIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  animation: quickPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes quickPopIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(-6px);
+    transform: scale(0.96) translateY(8px);
   }
   to {
     opacity: 1;
@@ -1700,26 +1732,78 @@ body {
   }
 }
 
+/* Mobile Grab Bar / Drag Indicator */
+.redzone-quick-drag-indicator {
+  width: 38px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  margin: 8px auto 2px auto;
+  flex-shrink: 0;
+}
+
+/* Modal Header with Title, Active Status and Close button */
+.redzone-quick-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.redzone-quick-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.redzone-quick-modal-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.redzone-quick-modal-title {
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.redzone-quick-modal-subtitle {
+  color: #a3a3a3;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .redzone-quick-popover-tabs {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 10px;
   gap: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
 }
 
 .redzone-quick-tab {
   flex: 1;
   background: transparent;
-  border: none;
-  color: #8c8c8c;
-  font-size: 12px;
+  border: 1px solid transparent;
+  color: #a3a3a3;
+  font-size: 11.5px;
   font-weight: 600;
-  padding: 6px 8px;
+  padding: 6px 4px;
   border-radius: 8px;
   cursor: pointer;
   text-align: center;
-  transition: all 0.18s ease;
+  white-space: nowrap;
+  transition: all 0.16s ease;
 }
 
 .redzone-quick-tab:hover {
@@ -1729,27 +1813,47 @@ body {
 
 .redzone-quick-tab.active {
   color: #ffffff;
-  background: rgba(229, 9, 20, 0.25);
-  border: 1px solid rgba(229, 9, 20, 0.5);
+  background: rgba(229, 9, 20, 0.24);
+  border: 1px solid rgba(229, 9, 20, 0.55);
 }
 
 .redzone-quick-popover-close {
-  background: transparent;
-  border: none;
-  color: #8c8c8c;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e5e5e5;
   font-size: 13px;
-  padding: 4px 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all 0.16s ease;
 }
 
 .redzone-quick-popover-close:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(229, 9, 20, 0.5);
+  border-color: rgba(229, 9, 20, 0.7);
 }
 
 .redzone-quick-tab-body {
-  padding: 10px;
+  padding: 10px 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: min(360px, 50vh);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(229, 9, 20, 0.4) transparent;
+}
+
+.redzone-quick-tab-body::-webkit-scrollbar {
+  width: 4px;
+}
+.redzone-quick-tab-body::-webkit-scrollbar-thumb {
+  background: rgba(229, 9, 20, 0.4);
+  border-radius: 4px;
 }
 
 .redzone-quick-section-title {
@@ -1772,28 +1876,30 @@ body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  min-height: 42px;
   padding: 7px 10px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border-radius: 10px;
   color: #d6d6d6;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.16s ease;
   text-align: left;
 }
 
 .redzone-quick-opt-row:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.09);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .redzone-quick-opt-row.active {
-  background: rgba(229, 9, 20, 0.2);
-  border-color: var(--netflix-red);
+  background: rgba(229, 9, 20, 0.22);
+  border-color: rgba(229, 9, 20, 0.7);
   color: #ffffff;
+  box-shadow: 0 0 14px rgba(229, 9, 20, 0.25);
 }
 
 .redzone-quick-opt-badge {
@@ -1810,6 +1916,33 @@ body {
   font-weight: 900;
   font-size: 13px;
   margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.redzone-quick-fast-srv-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e5e5e5;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  text-align: center;
+}
+
+.redzone-quick-fast-srv-btn:hover {
+  background: rgba(229, 9, 20, 0.2);
+  border-color: rgba(229, 9, 20, 0.4);
+  color: #ffffff;
+}
+
+.redzone-quick-fast-srv-btn.active {
+  background: rgba(229, 9, 20, 0.32);
+  border-color: #ff4d58;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.35);
 }
 
 .redzone-quick-caption-banner {
@@ -1839,9 +1972,51 @@ body {
   font-size: 10.5px;
   color: #8c8c8c;
   line-height: 1.4;
-  padding: 4px 6px;
+  padding: 6px 8px;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 480px) {
+  .redzone-quick-modal-backdrop {
+    padding: 8px;
+    align-items: flex-end;
+  }
+  .redzone-quick-settings-popover {
+    max-width: 100%;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    max-height: 82vh;
+  }
+  .redzone-quick-tab-body {
+    max-height: 52vh;
+  }
+}
+
+@media (max-height: 500px) {
+  /* Phone landscape mode */
+  .redzone-quick-modal-backdrop {
+    align-items: center;
+    padding: 6px;
+  }
+  .redzone-quick-settings-popover {
+    max-height: 94vh;
+    max-width: 420px;
+  }
+  .redzone-quick-tab-body {
+    max-height: 58vh;
+    padding: 6px 10px;
+  }
+  .redzone-quick-drag-indicator {
+    display: none;
+  }
+  .redzone-quick-modal-header {
+    padding: 6px 10px;
+  }
+  .redzone-quick-popover-tabs {
+    padding: 4px 8px;
+  }
 }
 
 /* Audio / Dubbed Controls & Notifications */

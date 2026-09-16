@@ -256,6 +256,7 @@ export const getSourceUrl = (
       url.searchParams.set("audio", "hi");
       url.searchParams.set("lang", "hi");
       url.searchParams.set("audio_lang", "hi");
+      url.searchParams.set("server", "hindi");
       url.searchParams.set("translationType", "dub");
       url.searchParams.set("multi", "1");
     } else if (dubMode === "dub" || dubMode === "english" || dubMode === "en") {

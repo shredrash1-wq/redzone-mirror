@@ -1759,31 +1759,34 @@ export default function TVPage({
                     {isSaved ? <BookmarkFillIcon /> : <BookmarkIcon />}
                     {isSaved ? "Saved" : "Save"}
                   </button>
-                  {(isAnime || (item?.original_language && item.original_language !== "en") || isAsync || playerSource === "allmanga" || playerSource === "autoembed" || playerSource === "multiembed" || playerSource === "vidlink") && (
-                    <button
-                      className={`btn ${dubMode !== "sub" ? "btn-primary" : "btn-secondary"}`}
-                      onClick={() => {
-                        const next = dubMode === "sub" ? "dub" : dubMode === "dub" ? "hindi" : "sub";
-                        setDubMode(next);
-                        storage.set(STORAGE_KEYS.ALLMANGA_DUB_MODE, next);
-                        if (next === "hindi" && playerSource !== "autoembed" && playerSource !== "multiembed") {
-                          setPlayerSource("autoembed");
-                          storage.set(STORAGE_KEYS.PLAYER_SOURCE, "autoembed");
+                  <button
+                    className={`btn ${dubMode !== "sub" ? "btn-primary" : "btn-secondary"}`}
+                    onClick={() => {
+                      const next = dubMode === "sub" ? "dub" : dubMode === "dub" ? "hindi" : "sub";
+                      setDubMode(next);
+                      storage.set(STORAGE_KEYS.ALLMANGA_DUB_MODE, next);
+                      if (next === "hindi") {
+                        setPlayerSource("multiembed");
+                        storage.set(STORAGE_KEYS.PLAYER_SOURCE, "multiembed");
+                      } else if (next === "dub") {
+                        if (playerSource === "multiembed") {
+                          setPlayerSource("videasy");
+                          storage.set(STORAGE_KEYS.PLAYER_SOURCE, "videasy");
                         }
-                        lastResolvedEpKeyRef.current = "";
-                        resolvedPlayerUrlRef.current = null;
-                        setResolvedPlayerUrl(null);
-                        setM3u8Url(null);
-                        setInterceptedSubs([]);
-                        resolvingUrlRef.current = false;
-                        setResolvingUrl(false);
-                        setResolveError(null);
-                      }}
-                      title="Toggle Audio: Original Sub, English Dub, or Hindi Dub"
-                    >
-                      {dubMode === "hindi" ? "🇮🇳 Hindi Dub" : dubMode === "dub" ? "🔊 English Dub" : isAnime ? "🎙️ Japanese Sub" : "🎙️ Original / Sub"}
-                    </button>
-                  )}
+                      }
+                      lastResolvedEpKeyRef.current = "";
+                      resolvedPlayerUrlRef.current = null;
+                      setResolvedPlayerUrl(null);
+                      setM3u8Url(null);
+                      setInterceptedSubs([]);
+                      resolvingUrlRef.current = false;
+                      setResolvingUrl(false);
+                      setResolveError(null);
+                    }}
+                    title="Toggle Audio Track: Original, English Dub, or Hindi Dubbed"
+                  >
+                    {dubMode === "hindi" ? "🇮🇳 Hindi Dub" : dubMode === "dub" ? "🔊 English Dub" : isAnime ? "🎙️ Japanese Sub" : "🎙️ Audio / Dub"}
+                  </button>
                   <button className="btn btn-ghost" onClick={onBack}>
                     <BackIcon /> Back
                   </button>
