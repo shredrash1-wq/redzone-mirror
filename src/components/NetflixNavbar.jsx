@@ -15,6 +15,8 @@ export default function NetflixNavbar({
   downloadsCount = 0,
   notifications = [],
   onSelectMedia,
+  cursorEnabled = false,
+  onToggleCursor,
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(Boolean(searchQuery));
@@ -115,6 +117,26 @@ export default function NetflixNavbar({
                 }}
               >
                 Home
+              </button>
+            </li>
+            <li className="netflix-nav-item">
+              <button
+                type="button"
+                className={`netflix-cursor-toggle-btn ${cursorEnabled ? "active" : ""}`}
+                onClick={onToggleCursor}
+                title={cursorEnabled ? "Mouse Cursor: ON (Use remote D-pad to glide, OK to click. Click to turn OFF)" : "Mouse Cursor: OFF (Click to turn ON mouse pointer mode)"}
+                aria-label="Toggle Android TV Mouse Cursor"
+              >
+                <span className="netflix-cursor-icon-svg">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill={cursorEnabled ? "#ffffff" : "none"} stroke="currentColor" strokeWidth="2.2">
+                    <path d="M4 3l7.07 16.97 2.51-7.39 7.39-2.51L4 3z" />
+                    <path d="M13.58 13.58L19 19" />
+                  </svg>
+                </span>
+                <span>Cursor</span>
+                <span className={`netflix-cursor-badge ${cursorEnabled ? "on" : "off"}`}>
+                  {cursorEnabled ? "ON" : "OFF"}
+                </span>
               </button>
             </li>
             <li className="netflix-nav-item">

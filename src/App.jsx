@@ -55,6 +55,7 @@ import NetflixSearchPage from "./pages/NetflixSearchPage";
 import RedzoneVideoPlayer from "./components/RedzoneVideoPlayer";
 import RedzoneIntroAnimation from "./components/RedzoneIntroAnimation";
 import NetworkOfflineModal from "./components/NetworkOfflineModal";
+import VirtualCursor from "./components/VirtualCursor";
 import "./styles/netflix.css";
 
 import {
@@ -120,6 +121,18 @@ export default function App() {
   const [trendingTV, setTrendingTV] = useState([]);
   const [loadingHome, setLoadingHome] = useState(false);
   const [offline, setOffline] = useState(() => !navigator.onLine);
+
+  // ── Android TV Virtual Mouse Cursor State ─────────────────────────────────
+  const [cursorEnabled, setCursorEnabled] = useState(() => {
+    return Boolean(storage.get("redzone_tv_cursor_enabled"));
+  });
+  const toggleCursor = useCallback(() => {
+    setCursorEnabled((prev) => {
+      const next = !prev;
+      storage.set("redzone_tv_cursor_enabled", next);
+      return next;
+    });
+  }, []);
 
   // ── Player accent + subtitle lang ─────────────────────────────────────────
   // Computed once here and passed as a prop to MoviePage / TVPage so neither
@@ -1148,8 +1161,13 @@ export default function App() {
           isKids={isKids}
           onToggleKids={() => setIsKids((k) => !k)}
           downloadsCount={downloads?.length || 0}
+          cursorEnabled={cursorEnabled}
+          onToggleCursor={toggleCursor}
         />
       )}
+
+      {/* Android TV & Universal Remote Virtual Mouse Cursor */}
+      <VirtualCursor enabled={cursorEnabled} onToggle={toggleCursor} />
 
       {/* Player floating back button */}
       {isPlaying && (
