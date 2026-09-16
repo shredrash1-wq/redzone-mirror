@@ -891,13 +891,17 @@ export default function MoviePage({
                 {isSaved ? <BookmarkFillIcon /> : <BookmarkIcon />}
                 {isSaved ? "Saved" : "Save"}
               </button>
-              {(isAnime || (item?.original_language && item.original_language !== "en") || sourceIsAsync(playerSource) || playerSource === "allmanga" || playerSource === "autoembed" || playerSource === "vidlink") && (
+              {(isAnime || (item?.original_language && item.original_language !== "en") || sourceIsAsync(playerSource) || playerSource === "allmanga" || playerSource === "autoembed" || playerSource === "multiembed" || playerSource === "vidlink") && (
                 <button
-                  className={`btn ${dubMode === "dub" ? "btn-primary" : "btn-secondary"}`}
+                  className={`btn ${dubMode !== "sub" ? "btn-primary" : "btn-secondary"}`}
                   onClick={() => {
-                    const next = dubMode === "sub" ? "dub" : "sub";
+                    const next = dubMode === "sub" ? "dub" : dubMode === "dub" ? "hindi" : "sub";
                     setDubMode(next);
                     storage.set(STORAGE_KEYS.ALLMANGA_DUB_MODE, next);
+                    if (next === "hindi" && playerSource !== "autoembed" && playerSource !== "multiembed") {
+                      setPlayerSource("autoembed");
+                      storage.set(STORAGE_KEYS.PLAYER_SOURCE, "autoembed");
+                    }
                     lastResolvedMovieKeyRef.current = "";
                     resolvedPlayerUrlRef.current = null;
                     setResolvedPlayerUrl(null);
@@ -907,9 +911,9 @@ export default function MoviePage({
                     setResolvingUrl(false);
                     setResolveError(null);
                   }}
-                  title="Toggle Original Subbed or English Dubbed Audio"
+                  title="Toggle Audio: Original Sub, English Dub, or Hindi Dub"
                 >
-                  {dubMode === "dub" ? "🔊 English Dub" : isAnime ? "🎙️ Japanese Sub" : "🎙️ Original / Sub"}
+                  {dubMode === "hindi" ? "🇮🇳 Hindi Dub" : dubMode === "dub" ? "🔊 English Dub" : isAnime ? "🎙️ Japanese Sub" : "🎙️ Original / Sub"}
                 </button>
               )}
               {!isUnreleased &&
@@ -1137,12 +1141,12 @@ export default function MoviePage({
                 {PLAYER_SOURCES.find((s) => s.id === playerSource)?.label ??
                   "Source"}
               </button>
-              {/* Sub/Dub toggle for Anime & Async sources */}
-              {(isAnime || sourceIsAsync(playerSource) || playerSource === "allmanga") && (
+              {/* Sub/Dub toggle for Anime, Hindi & Async sources */}
+              {(isAnime || sourceIsAsync(playerSource) || playerSource === "allmanga" || playerSource === "autoembed" || playerSource === "multiembed") && (
                 <button
-                  className={`player-overlay-btn ${dubMode === "dub" ? "player-overlay-btn-active" : ""}`}
+                  className={`player-overlay-btn ${dubMode !== "sub" ? "player-overlay-btn-active" : ""}`}
                   style={
-                    dubMode === "dub"
+                    dubMode !== "sub"
                       ? {
                           background: "rgba(229, 9, 20, 0.35)",
                           borderColor: "var(--red)",
@@ -1152,9 +1156,13 @@ export default function MoviePage({
                       : { fontWeight: "600" }
                   }
                   onClick={() => {
-                    const next = dubMode === "sub" ? "dub" : "sub";
+                    const next = dubMode === "sub" ? "dub" : dubMode === "dub" ? "hindi" : "sub";
                     setDubMode(next);
                     storage.set(STORAGE_KEYS.ALLMANGA_DUB_MODE, next);
+                    if (next === "hindi" && playerSource !== "autoembed" && playerSource !== "multiembed") {
+                      setPlayerSource("autoembed");
+                      storage.set(STORAGE_KEYS.PLAYER_SOURCE, "autoembed");
+                    }
                     lastResolvedMovieKeyRef.current = "";
                     resolvedPlayerUrlRef.current = null;
                     setResolvedPlayerUrl(null);
@@ -1164,9 +1172,9 @@ export default function MoviePage({
                     setResolvingUrl(false);
                     setResolveError(null);
                   }}
-                  title="Toggle Japanese Sub / English Dub"
+                  title="Toggle Japanese Sub / English Dub / Hindi Dub"
                 >
-                  {dubMode === "sub" ? "🎙️ SUB" : "🔊 DUB"}
+                  {dubMode === "hindi" ? "🇮🇳 HINDI" : dubMode === "dub" ? "🔊 DUB" : "🎙️ SUB"}
                 </button>
               )}
               {/* Blocked ads & trackers button */}
@@ -1183,57 +1191,23 @@ export default function MoviePage({
                   <span className="player-blocked-badge">{blockedSession}</span>
                 )}
               </button>
-              {/* Pop-out button*/}
-              <button
-                className="player-overlay-btn"
-                onClick={() => {
-                  if (pipOpen) {
-                    window.electron?.closePipWindow?.();
-                    return;
-                  }
-                  const url = sourceIsAsync(playerSource)
-                    ? resolvedPlayerUrl
-                    : getSourceUrl(
-                        playerSource,
-                        "movie",
-                        item.id,
-                        null,
-                        null,
-                        {},
-                        playerAccentColor,
-                        playerSubLang,
-                      );
-                  if (!url) return;
-                  pipUrlRef.current = url;
-                  window.electron?.openPipWindow?.(url, item.title);
-                }}
-                title={pipOpen ? "Close pop-out" : "Pop out player"}
-                disabled={
-                  !pipOpen &&
-                  (webviewLoading ||
-                    !!(sourceIsAsync(playerSource) && !resolvedPlayerUrl))
-                }
-                style={pipOpen ? { color: "var(--red)" } : undefined}
-              >
-                <PopOutIcon />
-              </button>
             </div>
             {showSourceMenu && menuPos && (
               <div
                 className="source-dropdown source-dropdown--fixed"
-                style={{ top: menuPos.top, left: menuPos.left, minWidth: "220px" }}
+                style={{ top: menuPos.top, left: menuPos.left, minWidth: "240px" }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div style={{ padding: "8px 12px 4px", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", color: "var(--text3)", letterSpacing: "0.5px" }}>
                   Audio Language
                 </div>
-                <div style={{ display: "flex", gap: "6px", padding: "0 10px 8px" }}>
+                <div style={{ display: "flex", gap: "5px", padding: "0 10px 8px" }}>
                   <button
                     type="button"
                     style={{
                       flex: 1,
-                      padding: "6px 8px",
-                      fontSize: "12px",
+                      padding: "6px 6px",
+                      fontSize: "11px",
                       fontWeight: dubMode === "sub" ? "700" : "500",
                       borderRadius: "6px",
                       border: dubMode === "sub" ? "1px solid var(--red)" : "1px solid rgba(255,255,255,0.15)",
@@ -1261,8 +1235,8 @@ export default function MoviePage({
                     type="button"
                     style={{
                       flex: 1,
-                      padding: "6px 8px",
-                      fontSize: "12px",
+                      padding: "6px 6px",
+                      fontSize: "11px",
                       fontWeight: dubMode === "dub" ? "700" : "500",
                       borderRadius: "6px",
                       border: dubMode === "dub" ? "1px solid var(--red)" : "1px solid rgba(255,255,255,0.15)",
@@ -1284,7 +1258,40 @@ export default function MoviePage({
                       setResolveError(null);
                     }}
                   >
-                    🔊 Dub
+                    🔊 Eng Dub
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      flex: 1,
+                      padding: "6px 6px",
+                      fontSize: "11px",
+                      fontWeight: dubMode === "hindi" ? "700" : "500",
+                      borderRadius: "6px",
+                      border: dubMode === "hindi" ? "1px solid var(--red)" : "1px solid rgba(255,255,255,0.15)",
+                      background: dubMode === "hindi" ? "rgba(229, 9, 20, 0.35)" : "rgba(255,255,255,0.06)",
+                      color: "#fff",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                    onClick={() => {
+                      setDubMode("hindi");
+                      storage.set(STORAGE_KEYS.ALLMANGA_DUB_MODE, "hindi");
+                      if (playerSource !== "autoembed" && playerSource !== "multiembed") {
+                        setPlayerSource("autoembed");
+                        storage.set(STORAGE_KEYS.PLAYER_SOURCE, "autoembed");
+                      }
+                      lastResolvedMovieKeyRef.current = "";
+                      resolvedPlayerUrlRef.current = null;
+                      setResolvedPlayerUrl(null);
+                      setM3u8Url(null);
+                      setInterceptedSubs([]);
+                      resolvingUrlRef.current = false;
+                      setResolvingUrl(false);
+                      setResolveError(null);
+                    }}
+                  >
+                    🇮🇳 Hindi
                   </button>
                 </div>
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "4px 0 8px" }} />

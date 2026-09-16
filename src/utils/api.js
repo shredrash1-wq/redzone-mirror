@@ -179,6 +179,19 @@ export const PLAYER_SOURCES = [
       `https://player.autoembed.cc/embed/tv/${id}/${season}/${ep}`,
   },
   {
+    id: "multiembed",
+    label: "MultiEmbed",
+    tag: "HINDI DUB",
+    note: null,
+    supportsProgress: true,
+    colorParam: null,
+    langParam: null,
+    params: {},
+    movieUrl: (id) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
+    tvUrl: (id, season, ep) =>
+      `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${season}&e=${ep}`,
+  },
+  {
     id: "vidking",
     label: "Vidking",
     tag: null,
@@ -236,13 +249,32 @@ export const getSourceUrl = (
     url.searchParams.set(src.langParam, subtitleLang);
   }
 
-  // Inject Dub parameters if Dub mode is requested
-  if (dubMode === "dub") {
-    url.searchParams.set("dub", "1");
-    url.searchParams.set("audio", "dub");
-    url.searchParams.set("audio_lang", "en");
-    url.searchParams.set("translationType", "dub");
-    url.searchParams.set("multi", "1");
+  // Inject Dub parameters if Dub mode or language is requested
+  if (dubMode) {
+    if (dubMode === "hindi" || dubMode === "hi") {
+      url.searchParams.set("dub", "1");
+      url.searchParams.set("audio", "hi");
+      url.searchParams.set("lang", "hi");
+      url.searchParams.set("audio_lang", "hi");
+      url.searchParams.set("translationType", "dub");
+      url.searchParams.set("multi", "1");
+    } else if (dubMode === "dub" || dubMode === "english" || dubMode === "en") {
+      url.searchParams.set("dub", "1");
+      url.searchParams.set("audio", "dub");
+      url.searchParams.set("lang", "en");
+      url.searchParams.set("audio_lang", "en");
+      url.searchParams.set("translationType", "dub");
+      url.searchParams.set("multi", "1");
+    } else if (dubMode === "multi") {
+      url.searchParams.set("dub", "1");
+      url.searchParams.set("multi", "1");
+    } else if (dubMode !== "sub" && dubMode !== "default") {
+      url.searchParams.set("dub", "1");
+      url.searchParams.set("audio", dubMode);
+      url.searchParams.set("lang", dubMode);
+      url.searchParams.set("audio_lang", dubMode);
+      url.searchParams.set("translationType", "dub");
+    }
   }
 
   Object.entries(extraParams).forEach(([key, value]) => {
